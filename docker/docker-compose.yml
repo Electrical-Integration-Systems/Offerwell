@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  typesense:
+    image: typesense/typesense:27.1
+    container_name: typesense
+    restart: unless-stopped
+    ports:
+      # Legăm portul DOAR pe localhost (127.0.0.1) pentru securitate.
+      # Nu va fi expus public pe IP-ul VPS-ului.
+      - "127.0.0.1:8108:8108"
+    volumes:
+      - ./typesense-data:/data
+    environment:
+      # ÎNLOCUIEȘTE cu o parolă puternică. Aceasta este cheia de admin.
+      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-super-secret-admin-key}
+    command:
+      - '--data-dir=/data'
+      - '--enable-cors'
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    # Rulăm agentul Cloudflare care va crea tunelul securizat.
+    command: tunnel run
+    environment:
+      # Token-ul de autorizare pentru tunelul tău. Se obține din dashboard-ul Cloudflare.
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
