@@ -1,0 +1,16 @@
+{
+  "name": "typesense",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^7"
+  },
+  "dependencies": {
+    "csv-parser": "^3.2.1",
+    "typesense": "^3.0.6"
+  }
+}
