@@ -56,7 +56,6 @@ function MaterialeCards({
                       <Tooltip delay={0}>
                         <Button
                           isIconOnly
-                          variant="light"
                           size="sm"
                           className="min-w-fit h-fit p-1"
                           onPress={() => handleCopyPrice(price, index, field)}
@@ -113,7 +112,6 @@ function MaterialeTable({
                     <Tooltip delay={0}>
                       <Button
                         isIconOnly
-                        variant="light"
                         size="sm"
                         className="min-w-fit h-fit p-1"
                         onPress={() => handleCopyPrice(material.pretAchizitie, index, "pretAchizitie")}
@@ -133,7 +131,6 @@ function MaterialeTable({
                     <Tooltip delay={0}>
                       <Button
                         isIconOnly
-                        variant="light"
                         size="sm"
                         className="min-w-fit h-fit p-1"
                         onPress={() => handleCopyPrice(material.pretVanzare, index, "pretVanzare")}
@@ -153,7 +150,6 @@ function MaterialeTable({
                     <Tooltip delay={0}>
                       <Button
                         isIconOnly
-                        variant="light"
                         size="sm"
                         className="min-w-fit h-fit p-1"
                         onPress={() => handleCopyPrice(material.manopera, index, "manopera")}
@@ -393,7 +389,7 @@ export default function Home() {
             <SearchField.ClearButton aria-label="Șterge căutarea" />
           </SearchField.Group>
         </SearchField>
-        <Button type="submit" isIconOnly aria-label="Caută" isDisabled={!query.trim() || isSearching} className="size-12 rounded-full" suppressHydrationWarning>
+        <Button type="submit" isIconOnly aria-label="Caută" isDisabled={!query.trim() || isSearching} className="size-12 rounded-full">
           {isSearching ? <Spinner size="sm" /> : <Search className="size-5" />}
         </Button>
       </Form>
