@@ -1,5 +1,6 @@
 import { adaugaMaterial, editeazaMaterial, stergeMaterial } from "@/lib/typesense/admin";
 
+
 export async function POST(request: Request) {
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) {

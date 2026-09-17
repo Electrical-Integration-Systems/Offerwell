@@ -32,3 +32,21 @@ export async function searchTypesense<T extends object>(collectionName: string, 
 
     return (results.hits || []).map((hit) => hit.document);
 }
+
+export async function getNumarMateriale(): Promise<number> {
+    try {
+      const results = await typesenseClient
+        .collections("materiale")
+        .documents()
+        .search({
+          q: "*",
+          query_by: "descriere",
+          per_page: 1
+        });
+
+      return results.found || 0;
+    } catch (error) {
+      console.error("Error fetching material count:", error);
+      return 0;
+    }
+}

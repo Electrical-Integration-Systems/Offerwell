@@ -2,29 +2,36 @@
 
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { useRef, useSyncExternalStore, type ReactNode } from "react";
+import { Zap, Lightbulb, Flame, Cylinder, Plug, Shield } from "lucide-react"; // Am adaugat iconite
 
-type Polaroid = {
+export type FacetCategory = {
   id: string;
+  label: string;
+  query: string;
   rotate: number;
+  icon: ReactNode;
 };
 
-const PHOTOS: Polaroid[] = [
-  { id: "a", rotate: -8 },
-  { id: "b", rotate: 6 },
-  { id: "c", rotate: -4 },
-  { id: "d", rotate: 7 },
-  { id: "e", rotate: -6 },
-  { id: "f", rotate: 5 },
+// Definim cele 6 fatete extrase din CSV-ul tau
+export const FACETS: FacetCategory[] = [
+  { id: "cabluri", label: "Cabluri", query: "cablu", rotate: -8, icon: <Zap className="size-5 text-yellow-500" /> },
+  { id: "iluminat", label: "Iluminat", query: "iluminat", rotate: 6, icon: <Lightbulb className="size-5 text-orange-400" /> },
+  { id: "incendiu", label: "Incendiu", query: "incendiu", rotate: -4, icon: <Flame className="size-5 text-red-500" /> },
+  { id: "tuburi", label: "Tuburi", query: "tub", rotate: 7, icon: <Cylinder className="size-5 text-gray-500" /> },
+  { id: "aparataj", label: "Aparataj", query: "priză", rotate: -6, icon: <Plug className="size-5 text-blue-500" /> },
+  { id: "impamantare", label: "Împământare", query: "platbanda", rotate: 5, icon: <Shield className="size-5 text-green-600" /> },
 ];
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 function PolaroidCard({
-  photo,
+  facet,
   index,
+  onSelect
 }: {
-  photo: Polaroid;
+  facet: FacetCategory;
   index: number;
+  onSelect: (query: string) => void;
 }): ReactNode {
   const ref = useRef<HTMLDivElement | null>(null);
   const mx = useMotionValue(0);
@@ -58,8 +65,9 @@ function PolaroidCard({
       ref={ref}
       onPointerMove={handleMove}
       onPointerLeave={handleLeave}
-      initial={{ opacity: 0, y: -120, filter: "blur(18px)", rotate: photo.rotate }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)", rotate: photo.rotate }}
+      onClick={() => onSelect(facet.query)} // Executa cautarea la click
+      initial={{ opacity: 0, y: -120, filter: "blur(18px)", rotate: facet.rotate }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)", rotate: facet.rotate }}
       transition={{
         duration: 0.9,
         delay: 0.05 + index * 0.08,
@@ -68,15 +76,24 @@ function PolaroidCard({
       style={{
         x: tx,
         y: ty,
-        rotate: photo.rotate,
+        rotate: facet.rotate,
       }}
-      className="relative aspect-[3.5/4] w-[clamp(4rem,4vw,4rem)] shrink-0 overflow-hidden rounded-2xl border-6 border-neutral-300/40 bg-white p-1.5 dark:border-white/15 dark:bg-neutral-900 cursor-pointer"
+      // Am marit putin latimea (5.5rem) pt a incapea textul
+      className="relative flex flex-col aspect-[3.5/4] w-[clamp(4.5rem,4.5vw,4.5rem)] shrink-0 overflow-hidden rounded-xl border border-neutral-200/60 shadow-sm bg-white p-1.5 dark:border-white/15 dark:bg-neutral-900 cursor-pointer hover:shadow-md transition-shadow"
     >
+      {/* Zona imaginii polaroid (Gri) */}
+      <div className="flex-1 w-full bg-neutral-100 dark:bg-neutral-800 rounded-sm flex items-center justify-center">
+         {facet.icon}
+      </div>
+      {/* Zona textului polaroid */}
+      <div className="mt-1.5 text-[0.65rem] sm:text-[0.7rem] font-bold text-center text-neutral-700 dark:text-neutral-300 truncate">
+         {facet.label}
+      </div>
     </motion.div>
   );
 }
 
-export function PolaroidStrip(): ReactNode {
+export function PolaroidStrip({ onSelect }: { onSelect: (query: string) => void }): ReactNode {
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -88,9 +105,9 @@ export function PolaroidStrip(): ReactNode {
   }
 
   return (
-    <div className="flex flex-wrap w-full items-start gap-1 px-4 sm:gap-1.5 sm:px-8 justify-end">
-      {PHOTOS.map((photo, i) => (
-        <PolaroidCard key={photo.id} photo={photo} index={i} />
+    <div className="flex flex-wrap w-full items-start gap-1 px-4 sm:gap-2 sm:px-8 justify-end">
+      {FACETS.map((facet, i) => (
+        <PolaroidCard key={facet.id} facet={facet} index={i} onSelect={onSelect} />
       ))}
     </div>
   );

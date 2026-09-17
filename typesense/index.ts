@@ -12,15 +12,13 @@ type Material = {
   manopera: number;
 };
 
-const mockMaterials: Material[] = []
-
 const schema: CollectionCreateSchema = {
     name: collectionName,
     fields: [
         {'name': 'descriere', 'type': 'string'},
-        {'name': 'pretAchizitie', 'type': 'int32'},
-        {'name': 'pretVanzare', 'type': 'int32'},
-        {'name': 'manopera', 'type': 'int32'},
+        {'name': 'pretAchizitie', 'type': 'float'},
+        {'name': 'pretVanzare', 'type': 'float'},
+        {'name': 'manopera', 'type': 'float'},
     ]
 }
 
@@ -45,9 +43,9 @@ function loadMaterialsFromCSV(filePath: string): Promise<Material[]> {
             .on('data', (row) => {
                 results.push({
                     descriere: row.descriere,
-                    pretAchizitie: parseInt(row.pretAchizitie, 10) || 0,
-                    pretVanzare: parseInt(row.pretVanzare, 10) || 0,
-                    manopera: parseInt(row.manopera, 10) || 0,
+                    pretAchizitie: parseFloat(row.pretAchizitie?.replace(/,/g, '') || '0') || 0,
+                    pretVanzare: parseFloat(row.pretVanzare?.replace(/,/g, '') || '0') || 0,
+                    manopera: parseFloat(row.manopera?.replace(/,/g, '') || '0') || 0,
                 });
             })
             .on('end', () => {

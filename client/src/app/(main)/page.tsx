@@ -1,12 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Alert, Button, Card, Chip, Form, SearchField, Spinner, Tooltip, TextField, TextArea, NumberField, Label, FieldError, Fieldset, FieldGroup, Drawer, AlertDialog } from "@heroui/react";
 import { PackageSearch, Search, Copy, Check, Pencil, Trash } from "lucide-react"; 
-import { searchTypesense } from "@/lib/typesense/client";
+import { searchTypesense, getNumarMateriale } from "@/lib/typesense/client";
 import type { MaterialHit } from "@/types";
 import { PolaroidStrip } from "@/components/PolaroidStrip";
-import {Table} from "@heroui/react";
+import { Table } from "@heroui/react";
 
 const currency = new Intl.NumberFormat("ro-RO", { style: "currency", currency: "EUR" });
 
@@ -97,12 +97,12 @@ function MaterialeTable({
       <Table.ScrollContainer>
         <Table.Content aria-label="Materiale" className="min-w-[600px]">
           <Table.Header>
-            <Table.Column isRowHeader>Descriere</Table.Column>
-            <Table.Column>Preț Achiziție</Table.Column>
-            <Table.Column>Preț Vânzare</Table.Column>
-            <Table.Column>Manoperă</Table.Column>
-            <Table.Column>Acțiuni</Table.Column>
-          </Table.Header>
+                <Table.Column isRowHeader className="text-left">Descriere</Table.Column>
+                <Table.Column className="text-center">Preț Achiziție</Table.Column>
+                <Table.Column className="text-center">Preț Vânzare</Table.Column>
+                <Table.Column className="text-center">Manoperă</Table.Column>
+                <Table.Column className="text-center">Acțiuni</Table.Column>
+            </Table.Header>
           <Table.Body>
             {searchResults.map((material, index) => (
               <Table.Row key={material.id}>
@@ -210,6 +210,19 @@ export default function Home() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deletingMaterial, setDeletingMaterial] = useState<MaterialHit | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [numarMateriale, setNumarMateriale] = useState<number | null>(null);
+  
+  useEffect(() => {
+    const fetchNumarMateriale = async () => {
+      try {
+        const count = await getNumarMateriale();
+        setNumarMateriale(count);
+      } catch (err) {
+        console.error("Nu s-a putut prelua numarul de materiale: ", err);
+      }
+    };
+    fetchNumarMateriale();
+  }, []);
   
   const requestId = useRef(0);
 
@@ -244,6 +257,11 @@ export default function Home() {
     await performSearch(query);
   };
 
+  const handleFacetSelect = (facetQuery: string) => {
+    setQuery(facetQuery);
+    performSearch(facetQuery);
+  };
+
   const handleCopyPrice = async (price: number, index: number, field: string) => {
     try {
       await navigator.clipboard.writeText(price.toString());
@@ -276,9 +294,19 @@ export default function Home() {
         body: JSON.stringify({ id: editingData.id, ...editingData }),
       });
       
-      const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || "Materialul nu a putut fi editat.");
+        try {
+          const result = await response.json();
+          throw new Error(result.error || "Materialul nu a putut fi editat.");
+        } catch (parseErr) {
+          throw new Error("Materialul nu a putut fi editat.");
+        }
+      }
+      
+      try {
+        await response.json();
+      } catch (parseErr) {
+        console.error("Failed to parse response:", parseErr);
       }
       
       setSearchResults(searchResults.map(m => m.id === editingData.id ? editingData : m));
@@ -314,8 +342,18 @@ export default function Home() {
       });
       
       if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || "Materialul nu a putut fi șters.");
+        try {
+          const result = await response.json();
+          throw new Error(result.error || "Materialul nu a putut fi șters.");
+        } catch (parseErr) {
+          throw new Error("Materialul nu a putut fi șters.");
+        }
+      }
+      
+      try {
+        await response.json();
+      } catch (parseErr) {
+        console.error("Failed to parse response:", parseErr);
       }
       
       setSearchResults(searchResults.filter(m => m.id !== deletingMaterial.id));
@@ -333,12 +371,16 @@ export default function Home() {
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-8 sm:py-14">
-      <div className="flex flex-row mb-7 border-b border-border pb-6">
-        <div className="">
-          <p className="mb-2 text-sm font-medium text-accent">Catalog</p>
+      <div className="flex flex-col md:flex-row mb-10 border-b border-border pb-6 justify-between gap-6 md:gap-0">
+        <div className="flex-shrink-0">
+          <p className="mb-2 text-sm font-medium text-accent whitespace-nowrap">
+            Catalog{numarMateriale !== null && ` - Total: ${numarMateriale}`}
+          </p>
           <h1 className="text-3xl font-semibold">Materiale</h1>
         </div>
-        <PolaroidStrip />
+        <div className="flex flex-row items-center gap-3 overflow-visible">
+          <PolaroidStrip onSelect={handleFacetSelect} />
+        </div>
       </div>
       <Form onSubmit={handleSearch} className="mb-8 flex w-full flex-row items-end gap-3">
         <SearchField aria-label="Caută material" value={query} onChange={(value) => {
@@ -351,7 +393,7 @@ export default function Home() {
             <SearchField.ClearButton aria-label="Șterge căutarea" />
           </SearchField.Group>
         </SearchField>
-        <Button type="submit" isIconOnly aria-label="Caută" isDisabled={!query.trim() || isSearching} className="size-12 rounded-full">
+        <Button type="submit" isIconOnly aria-label="Caută" isDisabled={!query.trim() || isSearching} className="size-12 rounded-full" suppressHydrationWarning>
           {isSearching ? <Spinner size="sm" /> : <Search className="size-5" />}
         </Button>
       </Form>
