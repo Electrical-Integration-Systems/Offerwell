@@ -31,7 +31,7 @@ export default function AdaugaMaterialPage() {
     setSuccess(false);
     setValidationErrors({});
     try {
-      const response = await fetch("/api/adauga-material", {
+      const response = await fetch("/api/material", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ descriere: String(formData.get("descriere") || "").trim(), ...prices }),

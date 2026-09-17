@@ -9,11 +9,14 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@auth/core": "0.41.1",
     "@base-ui/react": "^1.8.0",
+    "@convex-dev/auth": "^0.0.95",
     "@heroui/react": "^3.2.5",
     "@heroui/styles": "^3.2.5",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.2.6",
+    "convex": "^1.46.0",
     "gsap": "^3.13.0",
     "lucide-react": "^1.45.0",
     "motion": "^12.23.12",

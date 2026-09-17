@@ -96,7 +96,7 @@ async function ensureDocuments(collectionName: string, documents: Material[]) {
 
 async function run() {
     try {
-        const csvData = await loadMaterialsFromCSV("materiale.csv");
+        const csvData = await loadMaterialsFromCSV("collections/materiale.csv");
         
         if (csvData.length === 0) {
             console.warn("No data found in CSV. Aborting import.");
@@ -107,7 +107,6 @@ async function run() {
         await ensureCollection(collectionName);
         await ensureDocuments(collectionName, csvData);
         
-        console.log("All tasks completed successfully!");
     } catch (err) {
         console.error("Error during execution:", err);
     }
