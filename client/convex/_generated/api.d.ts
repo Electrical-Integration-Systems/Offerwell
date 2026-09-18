@@ -9,9 +9,15 @@
  */
 
 import type * as auth from "../auth.js";
-import type * as generare_actions from "../generare/actions.js";
-import type * as generare_queries from "../generare/queries.js";
+import type * as bnr from "../bnr.js";
+import type * as crons from "../crons.js";
 import type * as http from "../http.js";
+import type * as oferte_actions from "../oferte/actions.js";
+import type * as oferte_excel from "../oferte/excel.js";
+import type * as oferte_mutations from "../oferte/mutations.js";
+import type * as oferte_queries from "../oferte/queries.js";
+import type * as oferte_review from "../oferte/review.js";
+import type * as types_index from "../types/index.js";
 
 import type {
   ApiFromModules,
@@ -21,9 +27,15 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
-  "generare/actions": typeof generare_actions;
-  "generare/queries": typeof generare_queries;
+  bnr: typeof bnr;
+  crons: typeof crons;
   http: typeof http;
+  "oferte/actions": typeof oferte_actions;
+  "oferte/excel": typeof oferte_excel;
+  "oferte/mutations": typeof oferte_mutations;
+  "oferte/queries": typeof oferte_queries;
+  "oferte/review": typeof oferte_review;
+  "types/index": typeof types_index;
 }>;
 
 /**

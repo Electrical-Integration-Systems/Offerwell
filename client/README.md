@@ -20,6 +20,15 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Offer Validation And Export
+
+- Run `bunx convex dev` locally to publish the schema and queries before using the updated frontend. Production requires the corresponding Convex deployment before the frontend rollout.
+- Matched materials live in `ofertaMateriale`, indexed by offer/row and offer/pending/row. Existing offers migrate their legacy matched-material array on first opening, in an authenticated, idempotent mutation. Saved validations and the offer revision are preserved.
+- Offer detail queries return metadata, counts and the global total, never the extracted or matched arrays. Material pages use Convex `.paginate()` and `usePaginatedQuery`; the pending filter runs against the database index.
+- HeroUI Pagination displays 20 rows per page. Cursors are discovered incrementally: navigating forward loads the next batch, while previously loaded pages remain cached. Page numbers do not imply a preloaded full result set.
+- XLSX export edits the original worksheet XML inside the input ZIP, retaining existing cell style references, row/column dimensions, merged cells and other workbook parts. New price cells reuse adjacent row styles. The original input is never overwritten. Existing output files must be regenerated to benefit from the new exporter.
+- Verification: `node node_modules/vitest/vitest.mjs run`, `node node_modules/typescript/bin/tsc --noEmit`, and `npm run build`. The isolated browser harness is `bun tests/generare-ai-preview.mjs` and uses mocked services only.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

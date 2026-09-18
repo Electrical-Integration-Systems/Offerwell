@@ -27,11 +27,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col">
-        <ConvexAuthNextjsServerProvider>
-          <ConvexClientProvider>
-            {children}
-          </ConvexClientProvider>
-        </ConvexAuthNextjsServerProvider>
+        {process.env.NEXT_PUBLIC_CONVEX_URL?.trim() ? (
+          <ConvexAuthNextjsServerProvider>
+            <ConvexClientProvider>
+              {children}
+            </ConvexClientProvider>
+          </ConvexAuthNextjsServerProvider>
+        ) : (
+          <ConvexClientProvider>{children}</ConvexClientProvider>
+        )}
       </body>
     </html>
   );

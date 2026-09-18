@@ -113,6 +113,7 @@ function MaterialeTable({
                       <Button
                         isIconOnly
                         size="sm"
+                        variant="danger-soft"
                         className="min-w-fit h-fit p-1"
                         onPress={() => handleCopyPrice(material.pretAchizitie, index, "pretAchizitie")}
                       >
@@ -132,6 +133,7 @@ function MaterialeTable({
                       <Button
                         isIconOnly
                         size="sm"
+                        variant="secondary"
                         className="min-w-fit h-fit p-1"
                         onPress={() => handleCopyPrice(material.pretVanzare, index, "pretVanzare")}
                       >
@@ -151,6 +153,7 @@ function MaterialeTable({
                       <Button
                         isIconOnly
                         size="sm"
+                        variant="tertiary"
                         className="min-w-fit h-fit p-1"
                         onPress={() => handleCopyPrice(material.manopera, index, "manopera")}
                       >
