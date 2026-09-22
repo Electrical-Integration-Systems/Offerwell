@@ -25,7 +25,7 @@ const schema: CollectionCreateSchema = {
 const client = new Typesense.Client({
     nodes: [
         {
-            host: "typesense.bmseis.software",
+            host: process.env.TYPESENSE_HOST ? process.env.TYPESENSE_HOST : "",
             port: 443,
             protocol: "https"
         }
@@ -93,6 +93,11 @@ async function ensureDocuments(collectionName: string, documents: Material[]) {
 }
 
 async function run() {
+    if (!process.env.TYPESENSE_API_KEY || !process.env.TYPESENSE_HOST) {
+        console.error("TYPESENSE_API_KEY or TYPESENSE_HOST is not set in the environment variables.");
+        return;
+    }
+
     try {
         const csvData = await loadMaterialsFromCSV("collections/materiale.csv");
         

@@ -12,7 +12,6 @@ services:
     volumes:
       - ./typesense-data:/data
     environment:
-      # ÎNLOCUIEȘTE cu o parolă puternică. Aceasta este cheia de admin.
       - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-super-secret-admin-key}
     command:
       - '--data-dir=/data'

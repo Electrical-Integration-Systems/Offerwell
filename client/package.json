@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "bun --bun next dev",
+    "dev:client": "bun --bun next dev",
+    "dev": "concurrently \"bun --bun next dev\" \"bunx convex dev\"",
     "build": "node node_modules/next/dist/bin/next build",
     "start": "bun --bun next start",
     "lint": "eslint"
@@ -39,6 +40,7 @@
     "@types/node": "^26.6.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^10.0.5",
     "convex-test": "^0.0.59",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
