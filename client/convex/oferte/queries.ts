@@ -3,7 +3,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { paginationOptsValidator } from "convex/server";
-import { getOfferProgress, summarizeMaterials, type MatchedMaterial } from "./review";
+import { getOfferProgress, normalizeMatchScore, summarizeMaterials, type MatchedMaterial } from "./review";
 
 export async function getOwnedOferta(ctx: QueryCtx, idGenerare: Id<"oferte">): Promise<Doc<"oferte">> {
   const userId = await getAuthUserId(ctx);
@@ -49,9 +49,10 @@ export const listMateriale = query({
   handler: async (ctx, args) => {
     await getOwnedOferta(ctx, args.idGenerare);
     const rows = ctx.db.query("ofertaMateriale");
-    return args.pendingOnly
+    const result = await (args.pendingOnly
       ? rows.withIndex("by_oferta_and_pending_and_rand", (index) => index.eq("oferta", args.idGenerare).eq("pending", true)).paginate(args.paginationOpts)
-      : rows.withIndex("by_oferta_and_rand", (index) => index.eq("oferta", args.idGenerare)).paginate(args.paginationOpts);
+      : rows.withIndex("by_oferta_and_rand", (index) => index.eq("oferta", args.idGenerare)).paginate(args.paginationOpts));
+    return { ...result, page: result.page.map((material) => ({ ...material, matchScore: normalizeMatchScore(material) })) };
   },
 });
 

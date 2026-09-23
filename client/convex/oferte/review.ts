@@ -7,6 +7,88 @@ export const MAX_MATERIALS = 2000;
 export const MAX_DESCRIPTION_LENGTH = 2000;
 export const EXCEL_MIME_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
+function normalizeToken(value: string) {
+  return value.normalize("NFD").replace(/\p{M}/gu, "").toLocaleLowerCase("ro-RO");
+}
+
+function tokenize(value: string) {
+  return value.match(/[\p{L}\p{N}]+/gu)?.map(normalizeToken) ?? [];
+}
+
+function editDistance(first: string, second: string) {
+  let previous = Array.from({ length: second.length + 1 }, (_, index) => index);
+  for (let firstIndex = 1; firstIndex <= first.length; firstIndex += 1) {
+    const current = [firstIndex];
+    for (let secondIndex = 1; secondIndex <= second.length; secondIndex += 1) {
+      current[secondIndex] = Math.min(
+        current[secondIndex - 1] + 1,
+        previous[secondIndex] + 1,
+        previous[secondIndex - 1] + (first[firstIndex - 1] === second[secondIndex - 1] ? 0 : 1),
+      );
+    }
+    previous = current;
+  }
+  return previous[second.length];
+}
+
+function inferMatchedTokens(query: string, matchedDescription: string) {
+  const availableMatches = tokenize(matchedDescription);
+  return tokenize(query).flatMap((queryToken) => {
+    let closestIndex = -1;
+    let closestDistance = Number.POSITIVE_INFINITY;
+    availableMatches.forEach((candidate, index) => {
+      const distance = editDistance(queryToken, candidate);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+    const allowedTypos = queryToken.length >= 7 ? 2 : queryToken.length >= 4 ? 1 : 0;
+    return closestIndex >= 0 && closestDistance <= allowedTypos
+      ? availableMatches.splice(closestIndex, 1)
+      : [];
+  });
+}
+
+export function calculateMatchQuality(query: string, tokensMatched: number, matchedTokens: string[]) {
+  const queryTokens = tokenize(query);
+  if (!queryTokens.length) return 1;
+
+  const matchedCount = Math.min(Math.max(tokensMatched, 0), queryTokens.length);
+  const coverage = matchedCount / queryTokens.length;
+  const availableQueryTokens = [...queryTokens];
+  const typoRates = matchedTokens.slice(0, matchedCount).map((matchedToken) => {
+    const normalizedMatch = normalizeToken(matchedToken);
+    let closestIndex = 0;
+    let closestDistance = Number.POSITIVE_INFINITY;
+    availableQueryTokens.forEach((queryToken, index) => {
+      const distance = editDistance(queryToken, normalizedMatch);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+    const closestToken = availableQueryTokens.splice(closestIndex, 1)[0] ?? "";
+    return closestDistance / Math.max(closestToken.length, normalizedMatch.length, 1);
+  });
+  const typoRate = typoRates.length
+    ? typoRates.reduce((total, rate) => total + rate, 0) / typoRates.length
+    : 0;
+
+  const quality = 1 + 9 * coverage * (1 - typoRate);
+  return Math.min(10, Math.max(1, Math.round(quality * 10) / 10));
+}
+
+export function normalizeMatchScore(material: Pick<MatchedMaterial, "descriereOriginala" | "descriereGasita" | "matchScore" | "matchedTokens">) {
+  if (Number.isFinite(material.matchScore) && material.matchScore >= 1 && material.matchScore <= 10) {
+    return material.matchScore;
+  }
+  const matchedTokens = material.matchedTokens?.length
+    ? material.matchedTokens
+    : inferMatchedTokens(material.descriereOriginala, material.descriereGasita);
+  return calculateMatchQuality(material.descriereOriginala, matchedTokens.length, matchedTokens);
+}
+
 export function isExactMatch(original: string, matched: string): boolean {
   const normalize = (value: string) => value.trim().toLowerCase().replace(/\s+/g, " ");
   return normalize(original) !== "" && normalize(original) === normalize(matched);

@@ -8,7 +8,7 @@ import * as XLSX from "xlsx";
 import Typesense from "typesense";
 import type { MaterialHit } from "../types";
 import { populateWorkbook } from "./excel";
-import { assertReadyForExport, EXCEL_MIME_TYPE, hasValidPrices, isExactMatch, MAX_DESCRIPTION_LENGTH, MAX_EXCEL_BYTES, MAX_MATERIALS } from "./review";
+import { assertReadyForExport, calculateMatchQuality, EXCEL_MIME_TYPE, hasValidPrices, isExactMatch, MAX_DESCRIPTION_LENGTH, MAX_EXCEL_BYTES, MAX_MATERIALS } from "./review";
 
 async function readWorkbook(file: Blob) {
   if (!file.size || file.size > MAX_EXCEL_BYTES) throw new Error("Fisierul Excel trebuie sa aiba maximum 10 MB.");
@@ -262,6 +262,7 @@ export const cautaSiPopuleazaPreturi = action({
             });
 
           const bestMatch = searchResults.hits?.[0];
+          const matchedTokens = bestMatch?.highlight.descriere?.matched_tokens ?? [];
 
           return {
             rand: mat.rand,
@@ -269,7 +270,10 @@ export const cautaSiPopuleazaPreturi = action({
             cantitate: mat.cantitate,
             unitate: mat.unitate,
             descriereGasita: bestMatch ? bestMatch.document.descriere : "Nu a fost găsit în baza de date",
-            matchScore: bestMatch?.text_match || 0,
+            matchScore: bestMatch
+              ? calculateMatchQuality(mat.descriere, bestMatch.text_match_info?.tokens_matched ?? matchedTokens.length, matchedTokens)
+              : 1,
+            matchedTokens,
             requiresValidation: !bestMatch || !isExactMatch(mat.descriere, bestMatch.document.descriere)
               || mat.cantitate <= 0 || !hasValidPrices({ ...bestMatch.document, cantitate: mat.cantitate }),
             validated: false,
@@ -285,7 +289,8 @@ export const cautaSiPopuleazaPreturi = action({
             unitate: mat.unitate,
             descriereOriginala: mat.descriere,
             descriereGasita: "Eroare la căutare",
-            matchScore: 0,
+            matchScore: 1,
+            matchedTokens: [],
             requiresValidation: true,
             validated: false,
             pretAchizitie: 0,

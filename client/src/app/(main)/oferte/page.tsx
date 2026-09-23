@@ -4,7 +4,7 @@ import GradientText from "@/components/GradientText";
 import Link from "next/link";
 import { useConvexAuth, usePaginatedQuery } from "convex/react";
 import { FileSpreadsheet, Plus, ArrowRight, CircleAlert, Check, Clock } from "lucide-react";
-import { Spinner, Table } from "@heroui/react";
+import { Spinner, Table, Button } from "@heroui/react";
 import { CursorPagination, PAGE_SIZE, useCursorPagination } from "@/components/cursor-pagination";
 import { api } from "../../../../convex/_generated/api";
 
@@ -38,12 +38,14 @@ export default function OfertePage() {
                         </GradientText>
                     </h1>
                 </div>
-                <Link href="/generare-ai" className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2">
-                    <Plus className="size-4" aria-hidden="true" />
-                    Adaugă
+                <Link href="/generare-ai">
+                    <Button variant="secondary">
+                        <Plus className="size-4" aria-hidden="true" />
+                        Adaugă
+                    </Button>
                 </Link>
             </div>
-            {loading ? <div role="status" className="flex items-center gap-3 py-10 text-sm text-muted-foreground"><Spinner size="sm" />Se încarcă ofertele...</div>
+            {loading ? <div role="status" className="flex items-center gap-3 py-10 text-sm text-muted-foreground justify-center"><Spinner size="sm" className="inline-block" />Se încarcă ofertele...</div>
                 : results.length === 0 ? <div className="border-y border-border py-14 text-center">
                     <FileSpreadsheet className="mx-auto mb-4 size-9 text-muted-foreground" aria-hidden="true" />
                     <h2 className="text-lg font-semibold">Nu există oferte</h2>

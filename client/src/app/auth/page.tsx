@@ -5,9 +5,11 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { Layers3 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function AuthPage() {
     const { signIn } = useAuthActions();
+    const router = useRouter();
     const [isSigningIn, setIsSigningIn] = useState(false);
     const [error, setError] = useState("");
     const submitting = useRef(false);
@@ -28,7 +30,9 @@ export default function AuthPage() {
             if (!result.signingIn) {
                 throw new Error("Sign-in incomplete");
             }
-            window.location.replace("/");
+            
+            router.refresh();
+            router.replace("/");
         } catch {
             setError("Unable to sign in. Check your email and password and try again.");
             submitting.current = false;

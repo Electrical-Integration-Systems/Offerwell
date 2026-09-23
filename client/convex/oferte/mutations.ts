@@ -36,6 +36,16 @@ export const prepareMaterialPagination = mutation({
   },
 });
 
+export const stergeOferta = mutation({
+  args: { idGenerare: v.id("oferte") },
+  handler: async (ctx, args) => {
+    const oferta = await getOwnedOferta(ctx, args.idGenerare);
+    await clearMaterials(ctx, oferta);
+    await ctx.db.delete(args.idGenerare);
+    return null;
+  },
+});
+
 async function getCurrentOferta(ctx: MutationCtx, args: { idGenerare: Id<"oferte">; expectedRevision: number }) {
   const oferta = await getOwnedOferta(ctx, args.idGenerare);
   if ((oferta.revision ?? 0) !== args.expectedRevision) {

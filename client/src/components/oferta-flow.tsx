@@ -129,6 +129,19 @@ const priceFields = [
 type MaterialEdit = Pick<MatchedMaterial, "rand" | "cantitate" | "pretAchizitie" | "pretVanzare" | "manopera">;
 const steps = ["Upload", "Analiză Excel", "Extragere", "Prețuri", "Validare", "Export"];
 
+function HighlightedDescription({ text, matchedTokens = [] }: { text: string; matchedTokens?: string[] }) {
+  const normalize = (value: string) => value.normalize("NFD").replace(/\p{M}/gu, "").toLocaleLowerCase("ro-RO");
+  const matches = new Set(matchedTokens.map(normalize));
+
+  return (
+    <p className="font-medium">
+      {text.split(/([\p{L}\p{N}]+)/gu).map((part, index) => matches.has(normalize(part))
+        ? <mark key={`${part}-${index}`} className="rounded-sm bg-warning/30 px-0.5 text-foreground">{part}</mark>
+        : part)}
+    </p>
+  );
+}
+
 function MaterialeTable({ materiale, currency, busy, editing, setEditing, onValidate }: {
   materiale: MatchedMaterial[];
   currency: Intl.NumberFormat;
@@ -170,11 +183,9 @@ function MaterialeTable({ materiale, currency, busy, editing, setEditing, onVali
           <Table.Content aria-label="Materiale și prețuri finale" className="min-w-[1060px]">
             <Table.Header>
               <Table.Column isRowHeader>Material / Potrivire catalog</Table.Column>
-              <Table.Column className="text-right">Cantitate</Table.Column>
               <Table.Column className="text-right">Achiziție / UM</Table.Column>
               <Table.Column className="text-right">Vânzare / UM</Table.Column>
               <Table.Column className="text-right">Manoperă / UM</Table.Column>
-              <Table.Column className="text-right">Total final</Table.Column>
               <Table.Column>Validare</Table.Column>
               <Table.Column className="text-right">Acțiuni</Table.Column>
             </Table.Header>
@@ -183,20 +194,19 @@ function MaterialeTable({ materiale, currency, busy, editing, setEditing, onVali
                 <Table.Row key={material.rand} id={material.rand} className={needsReview(material) ? "bg-warning/5" : ""}>
                   <Table.Cell className="min-w-64 max-w-80 whitespace-normal break-words">
                     <p className="mb-1 text-xs text-muted-foreground">Rând {material.rand}</p>
-                    <p className="font-medium">{material.descriereOriginala}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{material.descriereGasita}</p>
+                    <HighlightedDescription text={material.descriereOriginala} matchedTokens={material.matchedTokens} />
                   </Table.Cell>
-                  <Table.Cell className="text-right tabular-nums">{material.cantitate} {material.unitate}</Table.Cell>
                   <Table.Cell className="text-right tabular-nums">{currency.format(material.pretAchizitie)}</Table.Cell>
                   <Table.Cell className="text-right tabular-nums">{currency.format(material.pretVanzare)}</Table.Cell>
                   <Table.Cell className="text-right tabular-nums">{currency.format(material.manopera)}</Table.Cell>
-                  <Table.Cell className="text-right font-semibold tabular-nums">{currency.format(material.cantitate * (material.pretVanzare + material.manopera))}</Table.Cell>
                   <Table.Cell>
                     <span className={`flex items-center gap-1.5 whitespace-nowrap text-xs font-medium ${needsReview(material) ? "text-warning" : "text-success"}`}>
                       {needsReview(material) ? <CircleAlert className="size-4 shrink-0" /> : <Check className="size-4 shrink-0" />}
                       {needsReview(material) ? "De validat" : material.validated ? "Validat" : "Potrivire exactă"}
                     </span>
-                    <span className="mt-1 block text-xs text-muted-foreground" title="Scor brut Typesense">Scor: {material.matchScore}</span>
+                    <span className="mt-1 block text-xs text-muted-foreground" title="Scor de calitate calculat din acoperire și greșeli de tipar">
+                      Calitate: {material.matchScore}/10
+                    </span>
                   </Table.Cell>
                   <Table.Cell>
                     <div className="flex justify-end gap-1">
@@ -252,7 +262,7 @@ function MaterialePages({ idGenerare, pendingOnly, currency, busy, editing, setE
     { idGenerare, pendingOnly }, { initialNumItems: PAGE_SIZE });
   const pagination = useCursorPagination(results, status, loadMore);
   return <>
-    {pagination.loading && pagination.items.length === 0 ? <p role="status" className="flex items-center gap-2 py-8"><Spinner size="sm" />Se incarca materialele...</p> : (
+    {pagination.loading && pagination.items.length === 0 ? <p role="status" className="flex items-center gap-2 py-8 justify-center"><Spinner size="sm" />Se incarca materialele...</p> : (
       <MaterialeTable materiale={pagination.items} currency={currency} busy={busy || pagination.loading} editing={editing} setEditing={setEditing} onValidate={onValidate} />
     )}
     <CursorPagination {...pagination} disabled={busy || editing !== null} />
@@ -366,7 +376,7 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
   };
 
   if (idOferta && oferta === undefined) {
-    return <main role="status" className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-10"><Spinner size="sm" />Se încarcă oferta...</main>;
+    return <main role="status" className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-10 justify-center"><Spinner size="sm" />Se încarcă oferta...</main>;
   }
   if (idOferta && oferta === null) {
     return <main className="mx-auto max-w-5xl px-4 py-10">
@@ -387,6 +397,7 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
                             colors={['#88baff', '#00aaf4', '#2d7aff']}
                         >
                             {detail ? "Detalii ofertă" : "Generare AI"}
+                            {idGenerare && oferta?.excelInput?.fileName ? (" - " + oferta.excelInput.fileName) : null}
                         </GradientText>
                     </h1>
                     {!detail && <p className="text-muted-foreground">Adaugă lista de cantități pentru estimarea prețurilor folosind inteligență artificială</p>}
@@ -404,16 +415,7 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
               ))}
             </ol>
             {idGenerare ? (
-              <div className="mb-6 flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
-                <p className="flex min-w-0 flex-1 items-center gap-2 text-sm"><Sheet className="size-5 shrink-0 text-success" /><span className="break-all">{oferta?.excelInput.fileName ?? "Se încarcă oferta..."}</span></p>
-                <Button variant="secondary" isDisabled={busy || editing !== null} onPress={() => {
-                  currentOffer.current = null;
-                  uploadedFile.current = null;
-                  setExcelFile(null);
-                  setError("");
-                  router.replace("/generare-ai", { scroll: false });
-                }}><RotateCcw className="size-4" />Alt fișier</Button>
-              </div>
+              null
             ) : <ExcelDropzone file={excelFile} disabled={busy} onFileSelected={(file) => {
               uploadedFile.current = null;
               currentOffer.current = null;
