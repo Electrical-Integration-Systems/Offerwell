@@ -1,5 +1,7 @@
 "use client";
 
+import { CursorPagination, PAGE_SIZE } from "@/components/cursor-pagination";
+
 import { useRef, useState, useEffect } from "react";
 import { Button, Card, Chip, Form, SearchField, Spinner, Tooltip, TextField, TextArea, NumberField, Label, FieldError, Fieldset, FieldGroup, Drawer, AlertDialog, toast } from "@heroui/react";
 import { PackageSearch, Search, Copy, Check, Pencil, Trash } from "lucide-react"; 
@@ -198,6 +200,8 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState<MaterialHit[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchedQuery, setSearchedQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
 
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -223,23 +227,25 @@ export default function Home() {
   
   const requestId = useRef(0);
 
-  const performSearch = async (value: string) => {
+  const performSearch = async (value: string, page: number = 1) => {
     if (!value.trim()) {
       setSearchResults([]);
       setSearchedQuery("");
       setIsSearching(false);
+      setCurrentPage(1);
+      setTotalResults(0);
       return;
     }
     
     const currentRequest = ++requestId.current;
     setIsSearching(true);
-    setSearchResults([]);
-    setSearchedQuery("");
     try {
-      const results = await searchTypesense<MaterialHit>("materiale", value, "descriere");
+      const { results, total, page: resultPage } = await searchTypesense<MaterialHit>("materiale", value, "descriere", page, PAGE_SIZE);
       if (currentRequest !== requestId.current) return;
       setSearchResults(results);
       setSearchedQuery(value);
+      setCurrentPage(resultPage);
+      setTotalResults(total);
     } catch {
       if (currentRequest === requestId.current) {
         const id = toast.danger("Căutarea nu este disponibilă momentan. Încearcă din nou.", {
@@ -256,12 +262,20 @@ export default function Home() {
 
   const handleSearch = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await performSearch(query);
+    setCurrentPage(1);
+    await performSearch(query, 1);
   };
 
   const handleFacetSelect = (facetQuery: string) => {
     setQuery(facetQuery);
-    performSearch(facetQuery);
+    setCurrentPage(1);
+    performSearch(facetQuery, 1);
+  };
+  
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    performSearch(query, page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleCopyPrice = async (price: number, index: number, field: string) => {
@@ -391,7 +405,8 @@ export default function Home() {
       <Form onSubmit={handleSearch} className="mb-8 flex w-full flex-row items-end gap-3">
         <SearchField aria-label="Caută material" value={query} onChange={(value) => {
           setQuery(value);
-          performSearch(value);
+          setCurrentPage(1);
+          performSearch(value, 1);
         }} className="min-w-0 flex-1">
           <SearchField.Group className="h-12 border border-border bg-surface focus-within:ring-2 focus-within:ring-accent rounded-full px-3">
             <SearchField.SearchIcon />
@@ -407,7 +422,7 @@ export default function Home() {
       <section aria-label="Rezultate" aria-busy={isSearching}>
         <div role="status" aria-live="polite">
           {isSearching && <div className="flex items-center justify-center gap-3 py-16 text-muted"><Spinner size="sm" />Se caută materiale...</div>}
-          {searchedQuery && <div className="mb-5 flex flex-wrap items-center gap-3"><h2 className="min-w-0 break-words text-lg font-medium">Rezultate pentru „{searchedQuery}”</h2><Chip variant="soft">{searchResults.length}</Chip></div>}
+          {searchedQuery && <div className="mb-5 flex flex-wrap items-center gap-3"><h2 className="min-w-0 break-words text-lg font-medium">Rezultate pentru „{searchedQuery}"</h2><Chip variant="soft">{totalResults}</Chip></div>}
         </div>
 
         {!isSearching && searchResults.length === 0 && (
@@ -417,13 +432,23 @@ export default function Home() {
           </div>
         )}
 
-        {searchResults.length > 0 && (
+        {!isSearching && searchResults.length > 0 && (
           <MaterialeTable 
             searchResults={searchResults} 
             copiedField={copiedField} 
             handleCopyPrice={handleCopyPrice}
             onEditStart={handleEditStart}
             onDeleteStart={handleDeleteStart}
+          />
+        )}
+
+        {searchResults.length > 0 && totalResults > PAGE_SIZE && (
+          <CursorPagination 
+            page={currentPage}
+            pageCount={Math.ceil(totalResults / PAGE_SIZE)}
+            setPage={handlePageChange}
+            loading={isSearching}
+            disabled={isSearching}
           />
         )}
         

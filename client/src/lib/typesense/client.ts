@@ -13,16 +13,26 @@ export const typesenseClient = new Typesense.Client({
 });
 
 /**
- * A reusable function to query any collection.
+ * A reusable function to query any collection with pagination.
  * @param collectionName The name of the collection (e.g., 'materiale')
  * @param searchQuery The text the user is searching for
  * @param queryBy A comma-separated string of fields to search inside (e.g., 'descriere')
+ * @param page The page number (1-indexed)
+ * @param perPage Number of results per page
  */
-export async function searchTypesense<T extends object>(collectionName: string, searchQuery: string, queryBy: string): Promise<T[]> {
+export async function searchTypesense<T extends object>(
+  collectionName: string,
+  searchQuery: string,
+  queryBy: string,
+  page: number = 1,
+  perPage: number = 100
+): Promise<{ results: T[]; total: number; page: number; perPage: number }> {
+    const offset = (page - 1) * perPage;
     const searchParameters = {
       q: searchQuery,
       query_by: queryBy,
-      // You can add more parameters here like pagination (page, per_page) or filtering (filter_by)
+      page: page,
+      per_page: perPage,
     };
 
     const results = await typesenseClient
@@ -30,7 +40,12 @@ export async function searchTypesense<T extends object>(collectionName: string, 
       .documents()
       .search(searchParameters);
 
-    return (results.hits || []).map((hit) => hit.document);
+    return {
+      results: (results.hits || []).map((hit) => hit.document),
+      total: results.found || 0,
+      page,
+      perPage,
+    };
 }
 
 export async function getNumarMateriale(): Promise<number> {
