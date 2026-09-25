@@ -6,4 +6,6 @@ export type Material = {
   manopera: number;
 };
 
-export type MaterialHit = Material;
+export type MaterialHit = Material & {
+  matchedWords?: string[];
+};

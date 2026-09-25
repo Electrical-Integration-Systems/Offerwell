@@ -26,8 +26,7 @@ export async function searchTypesense<T extends object>(
   queryBy: string,
   page: number = 1,
   perPage: number = 100
-): Promise<{ results: T[]; total: number; page: number; perPage: number }> {
-    const offset = (page - 1) * perPage;
+): Promise<{ results: (T & { matchedWords?: string[] })[]; total: number; page: number; perPage: number }> {
     const searchParameters = {
       q: searchQuery,
       query_by: queryBy,
@@ -41,7 +40,18 @@ export async function searchTypesense<T extends object>(
       .search(searchParameters);
 
     return {
-      results: (results.hits || []).map((hit) => hit.document),
+      results: (results.hits || []).map((hit) => {
+        const doc = { ...hit.document };
+        // Extract matched tokens from highlights
+        if (hit.highlights && hit.highlights.length > 0) {
+          const matchedTokens = hit.highlights[0].matched_tokens || [];
+          console.log("Extracted matched_tokens:", matchedTokens);
+          if (matchedTokens.length > 0) {
+            (doc as any).matchedWords = matchedTokens;
+          }
+        }
+        return doc as T & { matchedWords?: string[] };
+      }),
       total: results.found || 0,
       page,
       perPage,

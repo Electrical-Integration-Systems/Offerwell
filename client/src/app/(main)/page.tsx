@@ -93,6 +93,29 @@ function MaterialeTable({
   onEditStart: (material: MaterialHit) => void;
   onDeleteStart: (material: MaterialHit) => void;
 }) {
+  const highlightText = (text: string, matchedWords: string[] | undefined) => {
+    console.log("highlightText called with:", { text: text.substring(0, 50), matchedWords });
+    if (!matchedWords || matchedWords.length === 0) {
+      console.log("No matched words, returning text as-is");
+      return text;
+    }
+    
+    // Create a pattern that matches any of the matched words (case-insensitive)
+    const pattern = new RegExp(`(${matchedWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
+    console.log("Pattern:", pattern);
+    
+    const parts = text.split(pattern);
+    console.log("Parts:", parts);
+    
+    return parts.map((part, index) => {
+      if (matchedWords.some(w => w.toLowerCase() === part.toLowerCase())) {
+        console.log("Highlighting:", part);
+        return <mark key={index} className="bg-yellow-200 dark:bg-yellow-800 font-semibold">{part}</mark>;
+      }
+      return part;
+    });
+  };
+
   return (
     <Table>
       <Table.ScrollContainer>
@@ -107,7 +130,9 @@ function MaterialeTable({
           <Table.Body>
             {searchResults.map((material, index) => (
               <Table.Row key={material.id}>
-                <Table.Cell>{material.descriere}</Table.Cell>
+                <Table.Cell>
+                  {highlightText(material.descriere, material.matchedWords)}
+                </Table.Cell>
                 <Table.Cell className="text-danger font-semibold">
                   <div className="flex items-center gap-2 justify-end">
                     {currency.format(material.pretAchizitie)}
