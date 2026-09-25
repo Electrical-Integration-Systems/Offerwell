@@ -9,7 +9,8 @@ export async function getOwnedOferta(ctx: QueryCtx, idGenerare: Id<"oferte">): P
   const userId = await getAuthUserId(ctx);
   if (userId === null) throw new Error("Autentificarea este necesara.");
   const oferta = await ctx.db.get(idGenerare);
-  if (!oferta || oferta.user !== userId) throw new Error("Oferta nu este disponibila.");
+  if (!oferta) throw new Error("Oferta nu a fost găsită.");
+  if (oferta.user !== userId) throw new Error("Oferta nu este disponibila.");
   return oferta;
 }
 
@@ -96,5 +97,25 @@ export const getOferta = query({
   handler: async (ctx, args) => {
     const oferta = await getOwnedOferta(ctx, args.idGenerare);
     return offerSummary(ctx, oferta);
+  },
+});
+
+export const getExchangeRate = query({
+  args: { moneda: v.string() },
+  handler: async (ctx, args) => {
+    const rate = await ctx.db.query("cursuriValutare")
+      .withIndex("by_moneda", (index) => index.eq("moneda", args.moneda))
+      .first();
+    return rate?.valoare ?? null;
+  },
+});
+
+export const getExchangeRateInternal = internalQuery({
+  args: { moneda: v.string() },
+  handler: async (ctx, args) => {
+    const rate = await ctx.db.query("cursuriValutare")
+      .withIndex("by_moneda", (index) => index.eq("moneda", args.moneda))
+      .first();
+    return rate?.valoare ?? null;
   },
 });

@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAction, useConvex, useConvexAuth, useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { CursorPagination, PAGE_SIZE, useCursorPagination } from "./cursor-pagination";
-import GradientText from "@/components/GradientText";
-import { Sparkles, UploadCloud, Check, Pencil, Trash, Sheet, Download, RotateCcw, CircleAlert, X, ArrowLeft } from "lucide-react";
-import { Table, Button, Input, Spinner, Tooltip, NumberField, Label, Checkbox } from "@heroui/react";
+import GradientText from "@/components/react-bits/GradientText";
+import { Sparkles, UploadCloud, Check, Pencil, Trash, Sheet, Download, RotateCcw, CircleAlert, ArrowLeft, Eye } from "lucide-react";
+import { Table, Button, Input, Spinner, Tooltip, NumberField, Label, Checkbox, Drawer, Fieldset, FieldGroup, FieldError, toast } from "@heroui/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { EXCEL_MIME_TYPE, MAX_EXCEL_BYTES, hasValidPrices, needsReview, type MatchedMaterial } from "../../convex/oferte/review";
@@ -136,134 +136,135 @@ function HighlightedDescription({ text, matchedTokens = [] }: { text: string; ma
   return (
     <p className="font-medium">
       {text.split(/([\p{L}\p{N}]+)/gu).map((part, index) => matches.has(normalize(part))
-        ? <mark key={`${part}-${index}`} className="rounded-sm bg-warning/30 px-0.5 text-foreground">{part}</mark>
+        ? <mark className="rounded-sm bg-warning/30 px-0.5 text-foreground">{part}</mark>
         : part)}
     </p>
   );
 }
 
-function MaterialeTable({ materiale, currency, busy, editing, setEditing, onValidate }: {
+function MaterialeTable({ materiale, currency, busy, editing, setEditing, onValidate, conversionRate, displayCurrency, displayCurrencyFormatter }: {
   materiale: MatchedMaterial[];
   currency: Intl.NumberFormat;
   busy: boolean;
   editing: MaterialEdit | null;
-  setEditing: (value: MaterialEdit | null) => void;
+  setEditing: (material: MatchedMaterial) => void;
   onValidate: (material: MaterialEdit) => Promise<void>;
+  conversionRate: number;
+  displayCurrency: "EUR" | "RON";
+  displayCurrencyFormatter: Intl.NumberFormat;
 }) {
+  const displayMultiplier = displayCurrency === "EUR" ? 1 : conversionRate;
   return (
-    <>
-      {editing && (
-        <form className="mb-6 border-y border-border bg-secondary/30 py-5" onSubmit={(event) => {
-          event.preventDefault();
-          void onValidate(editing);
-        }}>
-          <h3 className="mb-4 text-base font-semibold">Corectare material · Rând {editing.rand}</h3>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {priceFields.map(({ name, label }) => (
-              <NumberField key={name} isRequired minValue={0} step={0.01} value={editing[name]}
-                isDisabled={busy} formatOptions={{ maximumFractionDigits: 4 }}
-                onChange={(value) => setEditing({ ...editing, [name]: value })}>
-                <Label>{label}</Label>
-                <NumberField.Group>
-                  <NumberField.DecrementButton aria-label={`Scade ${label}`} />
-                  <NumberField.Input />
-                  <NumberField.IncrementButton aria-label={`Crește ${label}`} />
-                </NumberField.Group>
-              </NumberField>
+    <Table>
+      <Table.ScrollContainer className="max-w-full">
+        <Table.Content aria-label="Materiale și prețuri finale" className="min-w-[1060px]">
+          <Table.Header>
+            <Table.Column isRowHeader>Material / Potrivire catalog</Table.Column>
+            <Table.Column className="text-right">Achiziție / UM</Table.Column>
+            <Table.Column className="text-right">Vânzare / UM</Table.Column>
+            <Table.Column className="text-right">Manoperă / UM</Table.Column>
+            <Table.Column>Validare</Table.Column>
+            <Table.Column className="text-right">Acțiuni</Table.Column>
+          </Table.Header>
+          <Table.Body>
+            {materiale.map((material) => (
+              <Table.Row key={material.rand} id={material.rand} className={needsReview(material) ? "bg-warning/5" : ""}>
+                <Table.Cell className="min-w-64 max-w-80 whitespace-normal break-words">
+                  <div className="mb-2 flex items-center justify-between">
+                  <p className="mb-1 text-xs text-muted-foreground">Rând {material.rand}</p>
+                  <Tooltip delay={50}>
+                    <Tooltip.Trigger>
+                        <Eye className="size-5 cursor-pointer" />
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>
+                      <p>{material.descriereGasita}</p>
+                      <Tooltip.Arrow />
+                    </Tooltip.Content>
+                  </Tooltip>
+                  </div>
+                  <HighlightedDescription text={material.descriereOriginala} matchedTokens={material.matchedTokens} />
+                </Table.Cell>
+                <Table.Cell className="text-right tabular-nums">{displayCurrencyFormatter.format(material.pretAchizitie * displayMultiplier)}</Table.Cell>
+                <Table.Cell className="text-right tabular-nums">{displayCurrencyFormatter.format(material.pretVanzare * displayMultiplier)}</Table.Cell>
+                <Table.Cell className="text-right tabular-nums">{displayCurrencyFormatter.format(material.manopera * displayMultiplier)}</Table.Cell>
+                <Table.Cell>
+                  <span className={`flex items-center gap-1.5 whitespace-nowrap text-xs font-medium ${needsReview(material) ? "text-warning" : "text-success"}`}>
+                    {needsReview(material) ? <CircleAlert className="size-4 shrink-0" /> : <Check className="size-4 shrink-0" />}
+                    {needsReview(material) ? "De validat" : material.validated ? "Validat" : "Potrivire exactă"}
+                  </span>
+                  <span className="mt-1 block text-xs text-muted-foreground" title="Scor de calitate calculat din acoperire și greșeli de tipar">
+                    Calitate: {material.matchScore}/10
+                  </span>
+                </Table.Cell>
+                <Table.Cell>
+                  <div className="flex justify-end gap-1">
+                    <Tooltip>
+                      <Button isIconOnly size="sm" variant="secondary" aria-label={`Editează rândul ${material.rand}`}
+                        isDisabled={busy || editing !== null} onPress={() => setEditing(material)}><Pencil className="size-4" /></Button>
+                      <Tooltip.Content>Editează prețurile</Tooltip.Content>
+                    </Tooltip>
+                    <Tooltip>
+                      <Button isIconOnly size="sm" variant="primary" aria-label={`Validează rândul ${material.rand}`}
+                        isDisabled={busy || editing !== null || !needsReview(material) || !hasValidPrices(material)}
+                        onPress={() => { void onValidate(material); }}><Check className="size-4" /></Button>
+                      <Tooltip.Content>Confirmă materialul și prețurile</Tooltip.Content>
+                    </Tooltip>
+                  </div>
+                </Table.Cell>
+              </Table.Row>
             ))}
-          </div>
-          <div className="mt-4 flex flex-wrap justify-end gap-2">
-            <Button type="button" variant="secondary" isDisabled={busy} onPress={() => setEditing(null)}><X className="size-4" />Anulează</Button>
-            <Button type="submit" isDisabled={busy || !hasValidPrices(editing)}><Check className="size-4" />Salvează și validează</Button>
-          </div>
-        </form>
-      )}
-      <Table>
-        <Table.ScrollContainer className="max-w-full">
-          <Table.Content aria-label="Materiale și prețuri finale" className="min-w-[1060px]">
-            <Table.Header>
-              <Table.Column isRowHeader>Material / Potrivire catalog</Table.Column>
-              <Table.Column className="text-right">Achiziție / UM</Table.Column>
-              <Table.Column className="text-right">Vânzare / UM</Table.Column>
-              <Table.Column className="text-right">Manoperă / UM</Table.Column>
-              <Table.Column>Validare</Table.Column>
-              <Table.Column className="text-right">Acțiuni</Table.Column>
-            </Table.Header>
-            <Table.Body>
-              {materiale.map((material) => (
-                <Table.Row key={material.rand} id={material.rand} className={needsReview(material) ? "bg-warning/5" : ""}>
-                  <Table.Cell className="min-w-64 max-w-80 whitespace-normal break-words">
-                    <p className="mb-1 text-xs text-muted-foreground">Rând {material.rand}</p>
-                    <HighlightedDescription text={material.descriereOriginala} matchedTokens={material.matchedTokens} />
-                  </Table.Cell>
-                  <Table.Cell className="text-right tabular-nums">{currency.format(material.pretAchizitie)}</Table.Cell>
-                  <Table.Cell className="text-right tabular-nums">{currency.format(material.pretVanzare)}</Table.Cell>
-                  <Table.Cell className="text-right tabular-nums">{currency.format(material.manopera)}</Table.Cell>
-                  <Table.Cell>
-                    <span className={`flex items-center gap-1.5 whitespace-nowrap text-xs font-medium ${needsReview(material) ? "text-warning" : "text-success"}`}>
-                      {needsReview(material) ? <CircleAlert className="size-4 shrink-0" /> : <Check className="size-4 shrink-0" />}
-                      {needsReview(material) ? "De validat" : material.validated ? "Validat" : "Potrivire exactă"}
-                    </span>
-                    <span className="mt-1 block text-xs text-muted-foreground" title="Scor de calitate calculat din acoperire și greșeli de tipar">
-                      Calitate: {material.matchScore}/10
-                    </span>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <div className="flex justify-end gap-1">
-                      <Tooltip>
-                        <Button isIconOnly size="sm" variant="secondary" aria-label={`Editează rândul ${material.rand}`}
-                          isDisabled={busy || editing !== null} onPress={() => setEditing(material)}><Pencil className="size-4" /></Button>
-                        <Tooltip.Content>Editează prețurile</Tooltip.Content>
-                      </Tooltip>
-                      <Tooltip>
-                        <Button isIconOnly size="sm" variant="primary" aria-label={`Validează rândul ${material.rand}`}
-                          isDisabled={busy || editing !== null || !needsReview(material) || !hasValidPrices(material)}
-                          onPress={() => { void onValidate(material); }}><Check className="size-4" /></Button>
-                        <Tooltip.Content>Confirmă materialul și prețurile</Tooltip.Content>
-                      </Tooltip>
-                    </div>
-                  </Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table.Content>
-        </Table.ScrollContainer>
-      </Table>
-    </>
+          </Table.Body>
+        </Table.Content>
+      </Table.ScrollContainer>
+    </Table>
   );
 }
 
 function PrepareMaterialPages({ idGenerare }: { idGenerare: Id<"oferte"> }) {
   const prepare = useMutation(api.oferte.mutations.prepareMaterialPagination);
   const [attempt, setAttempt] = useState(0);
-  const [error, setError] = useState("");
+  const [isRetrying, setIsRetrying] = useState(false);
   useEffect(() => {
     let cancelled = false;
     void prepare({ idGenerare }).catch((caught: unknown) => {
-      if (!cancelled) setError(caught instanceof Error ? caught.message : "Pregatirea materialelor a esuat.");
+      if (!cancelled) {
+        const message = caught instanceof Error ? caught.message : "Pregatirea materialelor a esuat.";
+        const id = toast.danger(message, {
+          actionProps: {
+            children: "Încearcă din nou",
+            onPress: () => {
+              toast.close(id);
+              setIsRetrying(true);
+              setAttempt((value) => value + 1);
+              setTimeout(() => setIsRetrying(false), 500);
+            }
+          }
+        });
+      }
     });
     return () => { cancelled = true; };
   }, [idGenerare, prepare, attempt]);
-  return error ? <div className="py-4"><p role="alert" className="mb-3 text-danger">{error}</p>
-    <Button onPress={() => { setError(""); setAttempt((value) => value + 1); }}><RotateCcw className="size-4" />Reincearca</Button>
-  </div> : <p role="status" className="flex items-center gap-2 py-4"><Spinner size="sm" />Se pregatesc materialele...</p>;
+  return <p role="status" className="flex items-center gap-2 py-4"><Spinner size="sm" />Se pregatesc materialele...</p>;
 }
 
-function MaterialePages({ idGenerare, pendingOnly, currency, busy, editing, setEditing, onValidate }: {
+function MaterialePages({ idGenerare, pendingOnly, currency, busy, editing, setEditing, onValidate, conversionRate, displayCurrency, displayCurrencyFormatter }: {
   idGenerare: Id<"oferte">;
   pendingOnly: boolean;
   currency: Intl.NumberFormat;
   busy: boolean;
   editing: MaterialEdit | null;
-  setEditing: (value: MaterialEdit | null) => void;
+  setEditing: (material: MatchedMaterial) => void;
   onValidate: (material: MaterialEdit) => Promise<void>;
+  conversionRate: number;
+  displayCurrency: "EUR" | "RON";
+  displayCurrencyFormatter: Intl.NumberFormat;
 }) {
   const { results, status, loadMore } = usePaginatedQuery(api.oferte.queries.listMateriale,
     { idGenerare, pendingOnly }, { initialNumItems: PAGE_SIZE });
   const pagination = useCursorPagination(results, status, loadMore);
   return <>
     {pagination.loading && pagination.items.length === 0 ? <p role="status" className="flex items-center gap-2 py-8 justify-center"><Spinner size="sm" />Se incarca materialele...</p> : (
-      <MaterialeTable materiale={pagination.items} currency={currency} busy={busy || pagination.loading} editing={editing} setEditing={setEditing} onValidate={onValidate} />
+      <MaterialeTable materiale={pagination.items} currency={currency} busy={busy || pagination.loading} editing={editing} setEditing={setEditing} onValidate={onValidate} conversionRate={conversionRate} displayCurrency={displayCurrency} displayCurrencyFormatter={displayCurrencyFormatter} />
     )}
     <CursorPagination {...pagination} disabled={busy || editing !== null} />
   </>;
@@ -275,6 +276,7 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
   const { isAuthenticated } = useConvexAuth();
   const oferta = useQuery(api.oferte.queries.getOfertaPage, idOferta && isAuthenticated ? { idOferta } : "skip");
   const idGenerare = oferta?._id ?? null;
+  const exchangeRate = useQuery(api.oferte.queries.getExchangeRate, oferta?.excelMapping?.valuta && oferta.excelMapping.valuta !== "EUR" ? { moneda: "EUR" } : "skip");
   const generateUploadUrl = useMutation(api.oferte.mutations.generateUploadUrl);
   const uploadInputExcel = useMutation(api.oferte.mutations.uploadInputExcel);
   const analizaExcel = useAction(api.oferte.actions.analizaExcelInput);
@@ -282,27 +284,37 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
   const cautaPreturi = useAction(api.oferte.actions.cautaSiPopuleazaPreturi);
   const valideazaMaterial = useMutation(api.oferte.mutations.valideazaMaterial);
   const genereazaExcel = useAction(api.oferte.actions.genereazaExcelOutput);
+  const materialCount = oferta?.materialCount ?? 0;
+  const pendingCount = oferta?.pendingCount ?? 0;
+  const baseValuta = oferta?.excelMapping?.valuta || "RON";
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [activeStep, setActiveStep] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
   const [editing, setEditing] = useState<MaterialEdit | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [onlyPending, setOnlyPending] = useState(false);
+  const [displayCurrency, setDisplayCurrency] = useState<"EUR" | "RON">("RON");
   const inFlight = useRef(false);
   const uploadedFile = useRef<Id<"_storage"> | null>(null);
   const currentOffer = useRef<Id<"oferte"> | null>(null);
+  
+  useEffect(() => {
+    setDisplayCurrency(baseValuta === "EUR" ? "EUR" : "RON");
+  }, [baseValuta]);
   const busy = activeStep !== null || saving;
-  const materialCount = oferta?.materialCount ?? 0;
-  const pendingCount = oferta?.pendingCount ?? 0;
-  const currency = new Intl.NumberFormat("ro-RO", { style: "currency", currency: oferta?.excelMapping?.valuta || "RON" });
-  const total = oferta?.total ?? 0;
+  const conversionRate = baseValuta !== "EUR" && exchangeRate ? exchangeRate : 1;
+  const currency = new Intl.NumberFormat("ro-RO", { style: "currency", currency: baseValuta });
+  const total = (oferta?.total ?? 0) * conversionRate;
+  const totalInEUR = (oferta?.total ?? 0);
+  const totalInRON = (oferta?.total ?? 0) * (exchangeRate || 1);
+  const displayedTotal = displayCurrency === "EUR" ? totalInEUR : totalInRON;
+  const displayCurrencyFormatter = new Intl.NumberFormat("ro-RO", { style: "currency", currency: displayCurrency === "EUR" ? "EUR" : "RON" });
   const completed = [Boolean(oferta), Boolean(oferta?.excelMapping), Boolean(oferta?.hasExtracted), Boolean(oferta?.hasMatched), Boolean(oferta?.hasMatched) && pendingCount === 0, Boolean(oferta?.excelOutput)];
 
   const processFile = async () => {
     if (inFlight.current || !isAuthenticated) return;
     inFlight.current = true;
     setActiveStep(idGenerare ? 1 : 0);
-    setError("");
     try {
       let offerId = idGenerare ?? currentOffer.current;
       if (!offerId) {
@@ -336,7 +348,12 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
         await cautaPreturi({ idGenerare: offerId });
       }
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Procesarea a eșuat. Încearcă din nou.");
+      const id = toast.danger(caught instanceof Error ? caught.message : "Procesarea a eșuat. Încearcă din nou.", {
+        actionProps: {
+          children: "Dismiss",
+          onPress: () => toast.close(id)
+        }
+      });
     } finally {
       inFlight.current = false;
       setActiveStep(null);
@@ -347,28 +364,54 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
     if (!idGenerare || !oferta || inFlight.current) return;
     inFlight.current = true;
     setSaving(true);
-    setError("");
     try {
       await valideazaMaterial({ idGenerare, expectedRevision: oferta.revision ?? 0, rand: material.rand,
         cantitate: material.cantitate, pretAchizitie: material.pretAchizitie, pretVanzare: material.pretVanzare, manopera: material.manopera });
       setEditing(null);
+      setIsDrawerOpen(false);
+      const id = toast.success("Material validat cu succes.", {
+        actionProps: {
+          children: "Dismiss",
+          onPress: () => toast.close(id)
+        }
+      });
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Validarea nu a putut fi salvată.");
+      const id = toast.danger(caught instanceof Error ? caught.message : "Validarea nu a putut fi salvată.", {
+        actionProps: {
+          children: "Dismiss",
+          onPress: () => toast.close(id)
+        }
+      });
     } finally {
       setSaving(false);
       inFlight.current = false;
     }
   };
 
+  const handleEditStart = (material: MatchedMaterial) => {
+    setEditing(material);
+    setIsDrawerOpen(true);
+  };
+
   const exportFile = async () => {
     if (!idGenerare || inFlight.current || editing || !oferta?.hasMatched || pendingCount) return;
     inFlight.current = true;
     setActiveStep(5);
-    setError("");
     try {
       await genereazaExcel({ idGenerare });
+      const id = toast.success("Excel generat cu succes.", {
+        actionProps: {
+          children: "Dismiss",
+          onPress: () => toast.close(id)
+        }
+      });
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Exportul a eșuat. Încearcă din nou.");
+      const id = toast.danger(caught instanceof Error ? caught.message : "Exportul a eșuat. Încearcă din nou.", {
+        actionProps: {
+          children: "Dismiss",
+          onPress: () => toast.close(id)
+        }
+      });
     } finally {
       inFlight.current = false;
       setActiveStep(null);
@@ -420,44 +463,95 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
               uploadedFile.current = null;
               currentOffer.current = null;
               setExcelFile(file);
-              setError("");
             }} />}
-            {error && <p role="alert" className="my-4 break-words rounded-lg border border-danger/30 bg-danger/5 p-3 text-sm text-danger">{error}</p>}
             <p role="status" className="mb-4 min-h-5 text-sm text-muted-foreground">
               {activeStep !== null ? `${steps[activeStep]} în curs...` : saving ? "Se salvează validarea..." : ""}
             </p>
             {!oferta?.hasMatched && (
               <Button isDisabled={busy || !isAuthenticated || (idGenerare ? !oferta : !excelFile)} onPress={() => { void processFile(); }}>
                 {busy ? <Spinner size="sm" /> : <Sparkles className="size-4" />}
-                {idGenerare || error ? "Reia procesarea" : "Analizează Excel"}
+                {idGenerare ? "Reia procesarea" : "Analizează Excel"}
               </Button>
             )}
+            
+            <Drawer isOpen={isDrawerOpen} onOpenChange={(open) => {
+              setIsDrawerOpen(open);
+              if (!open) {
+                setEditing(null);
+              }
+            }}>
+              <Drawer.Backdrop>
+                <Drawer.Content placement="right">
+                  <Drawer.Dialog>
+                    <Drawer.Header>
+                      <Drawer.Heading className="flex flex-row items-center gap-2 text-blue-500"><Pencil className="size-4 text-blue-500" aria-hidden="true" />Corectare material · Rând {editing?.rand}</Drawer.Heading>
+                    </Drawer.Header>
+                    <Drawer.Body>
+                      <Fieldset className="w-full gap-6">
+                        <FieldGroup className="gap-6 flex flex-col">
+                          {priceFields.map(({ name, label }) => (
+                            <NumberField 
+                              key={name}
+                              isRequired 
+                              minValue={0} 
+                              step={0.01} 
+                              value={editing ? editing[name] * conversionRate : 0}
+                              isDisabled={saving} 
+                              formatOptions={{ maximumFractionDigits: 4 }}
+                              onChange={(value) => editing && setEditing({ ...editing, [name]: value / conversionRate })}
+                            >
+                              <Label>{label}</Label>
+                              <NumberField.Group className="border border-border focus-within:ring-2 focus-within:ring-accent">
+                                <NumberField.DecrementButton aria-label={`Scade ${label.toLowerCase()}`} />
+                                <NumberField.Input className="min-w-0 tabular-nums" />
+                                <NumberField.IncrementButton aria-label={`Crește ${label.toLowerCase()}`} />
+                              </NumberField.Group>
+                              <FieldError />
+                            </NumberField>
+                          ))}
+                        </FieldGroup>
+                      </Fieldset>
+                    </Drawer.Body>
+                    <Drawer.Footer>
+                      <Button slot="close" variant="secondary" isDisabled={saving}>
+                        Anulează
+                      </Button>
+                      <Button slot="close" onPress={() => { editing && void validate(editing); }} isDisabled={saving || !editing || !hasValidPrices(editing)}>
+                        {saving ? <Spinner size="sm" /> : <Check className="size-4" />}Salvează și validează
+                      </Button>
+                    </Drawer.Footer>
+                  </Drawer.Dialog>
+                </Drawer.Content>
+              </Drawer.Backdrop>
+            </Drawer>
+            
             {oferta?.hasMatched && (
               <section aria-label="Preview ofertă" className="min-w-0">
                 <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
                   <div>
                     <h2 className="text-xl font-semibold">Materiale și prețuri</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">{materialCount} materiale · {pendingCount} de validat · {oferta.excelMapping?.valuta}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{materialCount} materiale</p>
                   </div>
-                  <div className="text-right"><p className="text-xs text-muted-foreground">Total vânzare + manoperă</p><p className="text-xl font-semibold tabular-nums">{currency.format(total)}</p></div>
+                  <Button variant="secondary" onPress={() => setDisplayCurrency(displayCurrency === "EUR" ? "RON" : "EUR")} className="flex flex-col items-end gap-1">
+                    <p className="text-xs text-muted-foreground">Total vânzare + manoperă</p>
+                    <p className="text-xl font-semibold tabular-nums">{displayCurrencyFormatter.format(displayedTotal)}</p>
+                  </Button>
                 </div>
-                <div className="mb-4">
-                  <Checkbox className="flex flex-row items-center gap-2" isSelected={onlyPending} onChange={setOnlyPending} isDisabled={busy || editing !== null}>
-                    <Checkbox.Control><Checkbox.Indicator /></Checkbox.Control>
-                    <Checkbox.Content><Label>Doar materiale de validat ({pendingCount})</Label></Checkbox.Content>
-                  </Checkbox>
-                </div>
-                {!oferta.materialsReady ? <PrepareMaterialPages key={oferta._id} idGenerare={oferta._id} /> : onlyPending && pendingCount === 0 ? <p role="status" className="border-y border-border py-8 text-sm text-success">Nu mai există materiale de validat.</p> : (
-                  <MaterialePages key={`${oferta._id}:${onlyPending}`} idGenerare={oferta._id} pendingOnly={onlyPending} currency={currency} busy={busy} editing={editing} setEditing={setEditing} onValidate={validate} />
-                )}
-                <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-5">
-                  <p role="status" className={`text-sm ${pendingCount ? "text-warning" : "text-success"}`}>
-                    {!materialCount ? "Nu există materiale de exportat." : pendingCount ? `${pendingCount} materiale necesită validare` : "Toate materialele sunt validate"}
-                  </p>
+                <div className="mt-6 mb-3 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-5">
+                  <div className="mb-4 flex flex-row gap-5">
+                    <Checkbox className="flex flex-row items-center gap-2" isSelected={onlyPending} onChange={setOnlyPending} isDisabled={busy || editing !== null}>
+                      <Checkbox.Control><Checkbox.Indicator /></Checkbox.Control>
+                      <Checkbox.Content><Label>Afișează doar materiale nevalidate</Label></Checkbox.Content>
+                    </Checkbox>
+                    <p role="status" className={`text-sm ${pendingCount ? "text-warning" : "text-success"}`}>
+                      {!materialCount ? "Nu există materiale de exportat." : pendingCount ? `${pendingCount} materiale necesită validare` : "Toate materialele sunt validate"}
+                    </p>
+                  </div>
                   {oferta.downloadUrl && !editing ? (
-                    <a href={oferta.downloadUrl} download={oferta.excelOutput?.fileName} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2">
-                      <Download className="size-4" />Descarcă Excel
+                    <a href={oferta.downloadUrl} download={oferta.excelOutput?.fileName} target="_blank" rel="noopener noreferrer">
+                      <Button variant="secondary">
+                        <Download className="size-4" />Descarcă Excel
+                      </Button>
                     </a>
                   ) : (
                     <Button isDisabled={busy || editing !== null || !oferta.materialsReady || !materialCount || pendingCount > 0} onPress={() => { void exportFile(); }}>
@@ -465,6 +559,9 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
                     </Button>
                   )}
                 </div>
+                {!oferta.materialsReady ? <PrepareMaterialPages key={oferta._id} idGenerare={oferta._id} /> : onlyPending && pendingCount === 0 ? <p role="status" className="border-y border-border py-8 text-sm text-success">Nu mai există materiale de validat.</p> : (
+                  <MaterialePages key={`${oferta._id}:${onlyPending}`} idGenerare={oferta._id} pendingOnly={onlyPending} currency={currency} busy={busy} editing={editing} setEditing={handleEditStart} onValidate={validate} conversionRate={conversionRate} displayCurrency={displayCurrency} displayCurrencyFormatter={displayCurrencyFormatter} />
+                )}
               </section>
             )}
         </main>

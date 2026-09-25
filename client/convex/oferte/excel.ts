@@ -4,7 +4,7 @@ import * as XLSX from "xlsx";
 import type { Doc } from "../_generated/dataModel";
 import type { MatchedMaterial } from "./review";
 
-export function populateWorkbook(input: ArrayBuffer, mapping: NonNullable<Doc<"oferte">["excelMapping"]>, materials: MatchedMaterial[]) {
+export function populateWorkbook(input: ArrayBuffer, mapping: NonNullable<Doc<"oferte">["excelMapping"]>, materials: MatchedMaterial[], conversionRate: number = 1) {
   const archive = unzipSync(new Uint8Array(input));
   const parser = new DOMParser();
   const parse = (path: string) => {
@@ -80,13 +80,13 @@ export function populateWorkbook(input: ArrayBuffer, mapping: NonNullable<Doc<"o
     const refs = headers.map((_, index) => `${XLSX.utils.encode_col(startColumn + index)}${material.rand}`);
     const quantityRef = `${mapping.coloanaCantitati}${material.rand}`;
     writeCell(quantityRef, material.cantitate);
-    writeCell(refs[0], material.pretAchizitie, style);
-    writeCell(refs[1], material.cantitate * material.pretAchizitie, style, `${quantityRef}*${refs[0]}`);
-    writeCell(refs[2], material.pretVanzare, style);
-    writeCell(refs[3], material.cantitate * material.pretVanzare, style, `${quantityRef}*${refs[2]}`);
-    writeCell(refs[4], material.manopera, style);
-    writeCell(refs[5], material.cantitate * material.manopera, style, `${quantityRef}*${refs[4]}`);
-    writeCell(refs[6], material.cantitate * (material.pretVanzare + material.manopera), style, `${refs[3]}+${refs[5]}`);
+    writeCell(refs[0], material.pretAchizitie * conversionRate, style);
+    writeCell(refs[1], material.cantitate * material.pretAchizitie * conversionRate, style, `${quantityRef}*${refs[0]}`);
+    writeCell(refs[2], material.pretVanzare * conversionRate, style);
+    writeCell(refs[3], material.cantitate * material.pretVanzare * conversionRate, style, `${quantityRef}*${refs[2]}`);
+    writeCell(refs[4], material.manopera * conversionRate, style);
+    writeCell(refs[5], material.cantitate * material.manopera * conversionRate, style, `${quantityRef}*${refs[4]}`);
+    writeCell(refs[6], material.cantitate * (material.pretVanzare + material.manopera) * conversionRate, style, `${refs[3]}+${refs[5]}`);
   }
   const dimension = document.getElementsByTagNameNS("*", "dimension")[0];
   if (dimension) {

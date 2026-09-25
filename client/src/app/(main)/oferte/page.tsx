@@ -1,12 +1,14 @@
 "use client";
 
-import GradientText from "@/components/GradientText";
+import GradientText from "@/components/react-bits/GradientText";
 import Link from "next/link";
-import { useConvexAuth, usePaginatedQuery } from "convex/react";
-import { FileSpreadsheet, Plus, ArrowRight, CircleAlert, Check, Clock } from "lucide-react";
-import { Spinner, Table, Button } from "@heroui/react";
+import { useConvexAuth, usePaginatedQuery, useMutation } from "convex/react";
+import { useState } from "react";
+import { FileSpreadsheet, Plus, CircleAlert, Check, Clock, StepForward, ExternalLink, Trash } from "lucide-react";
+import { Spinner, Table, Button, AlertDialog, toast } from "@heroui/react";
 import { CursorPagination, PAGE_SIZE, useCursorPagination } from "@/components/cursor-pagination";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@/../convex/_generated/api";
+import type { Id } from "@/../convex/_generated/dataModel";
 
 const statusLabels = {
     analysis: "De analizat",
@@ -23,7 +25,48 @@ export default function OfertePage() {
     const { results, status, loadMore } = usePaginatedQuery(api.oferte.queries.listOferte,
         isAuthenticated ? {} : "skip", { initialNumItems: PAGE_SIZE });
     const pagination = useCursorPagination(results, status, loadMore);
+    const deleteOferta = useMutation(api.oferte.mutations.deleteOferta);
     const loading = isLoading || status === "LoadingFirstPage";
+    const [deletingOfertaId, setDeletingOfertaId] = useState<Id<"oferte"> | null>(null);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [error, setError] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
+
+    const handleDelete = (id: Id<"oferte">) => {
+        setDeletingOfertaId(id);
+        setDeleteConfirmOpen(true);
+    };
+    
+    const handleDeleteConfirm = async () => {
+        if (!deletingOfertaId) return;
+
+        setIsDeleting(true);
+        setError("");
+        setSuccessMessage("");
+
+        try {
+            await deleteOferta({ idGenerare: deletingOfertaId });
+            const id = toast.success("Oferta a fost ștearsă cu succes.", {
+                actionProps: {
+                    children: "Dismiss",
+                    onPress: () => toast.close(id)
+                }
+            });
+        } catch (err) {
+            const id = toast.danger("A apărut o eroare la ștergerea ofertei.", {
+                actionProps: {
+                    children: "Dismiss",
+                    onPress: () => toast.close(id)
+                }
+            });
+        } finally {
+            setIsDeleting(false);
+            setDeleteConfirmOpen(false);
+            setDeletingOfertaId(null);
+        }
+    };
+
     return (
         <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-8 sm:py-14">
             <div className="flex flex-wrap justify-between items-end gap-4 mb-8 border-b border-border pb-6">
@@ -77,11 +120,18 @@ export default function OfertePage() {
                                                 {oferta.pendingCount > 0 && <p className="mt-1 text-xs text-muted-foreground">{oferta.pendingCount} de validat</p>}
                                             </Table.Cell>
                                             <Table.Cell className="text-right tabular-nums">{oferta.materialCount || "—"}</Table.Cell>
-                                            <Table.Cell className="text-right">
+                                            <Table.Cell className="text-right flex flex-1 gap-2 items-center justify-end">
                                                 <Link href={`/oferte/${oferta._id}`} aria-label={`${oferta.status === "completed" ? "Deschide" : "Continuă"} ${oferta.fileName}`}
                                                     className="inline-flex min-h-10 items-center gap-2 whitespace-nowrap text-sm font-medium hover:underline">
-                                                    {oferta.status === "completed" ? "Deschide" : "Continuă"}<ArrowRight className="size-4" aria-hidden="true" />
+                                                    <Button variant={`${oferta.status === "completed" ? "secondary" : "primary"}`} className="inline-flex items-center gap-2" size="sm">
+                                                        {oferta.status === "completed" ? <ExternalLink className="size-4" aria-hidden="true" /> : <StepForward className="size-4" aria-hidden="true" />}
+                                                    </Button>
                                                 </Link>
+                                                <Button variant="danger" className="inline-flex items-center gap-2" size="sm"
+                                                    onClick={() => handleDelete(oferta._id)}
+                                                >
+                                                    <Trash className="size-4" aria-hidden="true" />
+                                                </Button>
                                             </Table.Cell>
                                         </Table.Row>
                                     ))}
@@ -91,6 +141,33 @@ export default function OfertePage() {
                     </Table>
                 )}
             {!loading && results.length > 0 && <CursorPagination {...pagination} />}
+
+            <AlertDialog isOpen={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+                <AlertDialog.Backdrop>
+                <AlertDialog.Container>
+                    <AlertDialog.Dialog className="sm:max-w-[400px]">
+                    <AlertDialog.CloseTrigger />
+                    <AlertDialog.Header>
+                        <AlertDialog.Icon status="danger" />
+                        <AlertDialog.Heading>Șterge oferta?</AlertDialog.Heading>
+                    </AlertDialog.Header>
+                    <AlertDialog.Body>
+                        <p>
+                        Aceasta va șterge permanent <strong>oferta</strong> și toate datele sale. Această acțiune nu poate fi anulată.
+                        </p>
+                    </AlertDialog.Body>
+                    <AlertDialog.Footer>
+                        <Button slot="close" variant="secondary" isDisabled={isDeleting}>
+                        Anulează
+                        </Button>
+                        <Button slot="close" variant="danger" onPress={handleDeleteConfirm} isDisabled={isDeleting}>
+                        {isDeleting ? <Spinner size="sm" /> : "Șterge"}
+                        </Button>
+                    </AlertDialog.Footer>
+                    </AlertDialog.Dialog>
+                </AlertDialog.Container>
+                </AlertDialog.Backdrop>
+            </AlertDialog>
         </main>
     );
 }

@@ -1,11 +1,11 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { Alert, Button, Card, Chip, Form, SearchField, Spinner, Tooltip, TextField, TextArea, NumberField, Label, FieldError, Fieldset, FieldGroup, Drawer, AlertDialog } from "@heroui/react";
+import { Button, Card, Chip, Form, SearchField, Spinner, Tooltip, TextField, TextArea, NumberField, Label, FieldError, Fieldset, FieldGroup, Drawer, AlertDialog, toast } from "@heroui/react";
 import { PackageSearch, Search, Copy, Check, Pencil, Trash } from "lucide-react"; 
 import { searchTypesense, getNumarMateriale } from "@/lib/typesense/client";
 import type { MaterialHit } from "@/types";
-import { PolaroidStrip } from "@/components/PolaroidStrip";
+import { PolaroidStrip } from "@/components/react-bits/PolaroidStrip";
 import { Table } from "@heroui/react";
 
 const currency = new Intl.NumberFormat("ro-RO", { style: "currency", currency: "EUR" });
@@ -198,8 +198,6 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState<MaterialHit[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchedQuery, setSearchedQuery] = useState("");
-  const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
 
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -229,14 +227,12 @@ export default function Home() {
     if (!value.trim()) {
       setSearchResults([]);
       setSearchedQuery("");
-      setError("");
       setIsSearching(false);
       return;
     }
     
     const currentRequest = ++requestId.current;
     setIsSearching(true);
-    setError("");
     setSearchResults([]);
     setSearchedQuery("");
     try {
@@ -245,7 +241,14 @@ export default function Home() {
       setSearchResults(results);
       setSearchedQuery(value);
     } catch {
-      if (currentRequest === requestId.current) setError("Căutarea nu este disponibilă momentan. Încearcă din nou.");
+      if (currentRequest === requestId.current) {
+        const id = toast.danger("Căutarea nu este disponibilă momentan. Încearcă din nou.", {
+          actionProps: {
+            children: "Dismiss",
+            onPress: () => toast.close(id)
+          }
+        });
+      }
     } finally {
       if (currentRequest === requestId.current) setIsSearching(false);
     }
@@ -283,8 +286,6 @@ export default function Home() {
     if (!editingData || !editingData.id) return;
     
     setIsSaving(true);
-    setError("");
-    setSuccessMessage("");
     
     try {
       const response = await fetch("/api/material", {
@@ -311,11 +312,20 @@ export default function Home() {
       setSearchResults(searchResults.map(m => m.id === editingData.id ? editingData : m));
       setIsDrawerOpen(false);
       setEditingData(null);
-      setSuccessMessage("Material actualizat cu succes.");
       
-      setTimeout(() => setSuccessMessage(""), 3000);
+      const id = toast.success("Material actualizat cu succes.", {
+        actionProps: {
+          children: "Dismiss",
+          onPress: () => toast.close(id)
+        }
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Editarea a eșuat. Încearcă din nou.");
+      const id = toast.danger(err instanceof Error ? err.message : "Editarea a eșuat. Încearcă din nou.", {
+        actionProps: {
+          children: "Dismiss",
+          onPress: () => toast.close(id)
+        }
+      });
     } finally {
       setIsSaving(false);
     }
@@ -330,8 +340,6 @@ export default function Home() {
     if (!deletingMaterial || !deletingMaterial.id) return;
     
     setIsDeleting(true);
-    setError("");
-    setSuccessMessage("");
     
     try {
       const response = await fetch("/api/material", {
@@ -358,11 +366,10 @@ export default function Home() {
       setSearchResults(searchResults.filter(m => m.id !== deletingMaterial.id));
       setDeleteConfirmOpen(false);
       setDeletingMaterial(null);
-      setSuccessMessage("Material șters cu succes.");
       
-      setTimeout(() => setSuccessMessage(""), 3000);
+      const id = toast.success("Material șters cu succes.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ștergerea a eșuat. Încearcă din nou.");
+      const id = toast.danger(err instanceof Error ? err.message : "Ștergerea a eșuat. Încearcă din nou.");
     } finally {
       setIsDeleting(false);
     }
@@ -402,9 +409,8 @@ export default function Home() {
           {isSearching && <div className="flex items-center justify-center gap-3 py-16 text-muted"><Spinner size="sm" />Se caută materiale...</div>}
           {searchedQuery && <div className="mb-5 flex flex-wrap items-center gap-3"><h2 className="min-w-0 break-words text-lg font-medium">Rezultate pentru „{searchedQuery}”</h2><Chip variant="soft">{searchResults.length}</Chip></div>}
         </div>
-        {error && <Alert status="danger" role="alert" className="mb-6"><Alert.Indicator /><Alert.Content><Alert.Title>{error}</Alert.Title></Alert.Content></Alert>}
-        {successMessage && <Alert status="success" role="status" className="mb-6"><Alert.Indicator /><Alert.Content><Alert.Title>{successMessage}</Alert.Title></Alert.Content></Alert>}
-        {!isSearching && !error && searchResults.length === 0 && (
+
+        {!isSearching && searchResults.length === 0 && (
           <div className="flex flex-col items-center gap-4 py-16 text-center text-muted">
             <PackageSearch className="size-12 stroke-1 text-accent" aria-hidden="true" />
             <p>{searchedQuery ? "Nu s-au găsit materiale." : "Catalog de materiale"}</p>
@@ -494,7 +500,7 @@ export default function Home() {
                 <AlertDialog.CloseTrigger />
                 <AlertDialog.Header>
                   <AlertDialog.Icon status="danger" />
-                  <AlertDialog.Heading>Șterge material permanent?</AlertDialog.Heading>
+                  <AlertDialog.Heading>Șterge materialul?</AlertDialog.Heading>
                 </AlertDialog.Header>
                 <AlertDialog.Body>
                   <p>

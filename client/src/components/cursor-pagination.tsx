@@ -3,20 +3,28 @@
 import { useEffect, useState } from "react";
 import { Pagination, Spinner } from "@heroui/react";
 
-export const PAGE_SIZE = 20;
+export const PAGE_SIZE = 10;
 type PageStatus = "LoadingFirstPage" | "CanLoadMore" | "LoadingMore" | "Exhausted";
 
-export function useCursorPagination<Item>(results: Item[], status: PageStatus, loadMore: (count: number) => void) {
+export function useCursorPagination<Item>(results: Item[], status: PageStatus, loadMore: (count: number) => void, maxPagesToKeep = 3) {
   const [requestedPage, setPage] = useState(1);
-  const loadedPages = Math.ceil(results.length / PAGE_SIZE);
+  
+  // Keep a sliding window to avoid memory bloat
+  const maxItemsToKeep = PAGE_SIZE * maxPagesToKeep;
+  const windowedResults = results.slice(0, maxItemsToKeep);
+  
+  const loadedPages = Math.ceil(windowedResults.length / PAGE_SIZE);
   const pageCount = Math.max(1, loadedPages + (status === "CanLoadMore" || status === "LoadingMore" ? 1 : 0));
   const page = Math.min(requestedPage, pageCount);
+  
   useEffect(() => {
-    if (status === "CanLoadMore" && results.length < page * PAGE_SIZE) loadMore(PAGE_SIZE);
-  }, [page, results.length, status, loadMore]);
+    if (status === "CanLoadMore" && windowedResults.length < page * PAGE_SIZE) loadMore(PAGE_SIZE);
+  }, [page, windowedResults.length, status, loadMore]);
+  
   const loading = status === "LoadingFirstPage" || status === "LoadingMore"
-    || (status === "CanLoadMore" && results.length < page * PAGE_SIZE);
-  return { page, pageCount, setPage, loading, items: results.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) };
+    || (status === "CanLoadMore" && windowedResults.length < page * PAGE_SIZE);
+  
+  return { page, pageCount, setPage, loading, items: windowedResults.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) };
 }
 
 export function CursorPagination({ page, pageCount, setPage, loading, disabled = false }: {

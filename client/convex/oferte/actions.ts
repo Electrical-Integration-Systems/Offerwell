@@ -330,13 +330,30 @@ export const genereazaExcelOutput = action({
     // 1. Descarcam fișierul input original din Storage
     const fileBlob = await ctx.storage.get(generare.excelInput.content);
     if (!fileBlob) throw new Error("Nu am putut descărca fișierul input din Storage.");
-    await readWorkbook(fileBlob);
-    const excelBuffer = populateWorkbook(await fileBlob.arrayBuffer(), generare.excelMapping, generare.materialePotrivite);
+    
+    // (Opțional) Dacă vrei să păstrezi validarea de mărime o poți face direct pe proprietatea size:
+    if (!fileBlob.size || fileBlob.size > MAX_EXCEL_BYTES) {
+        throw new Error("Fisierul Excel trebuie sa aiba maximum 10 MB.");
+    }
 
-    // 6. Salvăm în Convex Storage
+    // 2. Obținem rata de schimb EUR→RON dacă valuta nu este EUR
+    const baseValuta = generare.excelMapping.valuta || "RON";
+    let conversionRate = 1;
+    if (baseValuta !== "EUR") {
+      const eurRate = await ctx.runQuery(internal.oferte.queries.getExchangeRateInternal, { moneda: "EUR" });
+      conversionRate = eurRate || 1;
+    }
+
+    // 3. Extragem arrayBuffer-ul O SINGURĂ DATĂ din Blob
+    const arrayBuffer = await fileBlob.arrayBuffer();
+
+    // 4. Pasăm arrayBuffer-ul, mapping-ul, materialele și rata de conversie la populateWorkbook
+    const excelBuffer = populateWorkbook(arrayBuffer, generare.excelMapping, generare.materialePotrivite, conversionRate);
+
+    // 5. Salvăm în Convex Storage
     const storageId = await ctx.storage.store(new Blob([excelBuffer], { type: EXCEL_MIME_TYPE }));
 
-    // 7. Legăm noul fișier de intrarea din baza de date
+    // 6. Legăm noul fișier de intrarea din baza de date
     try {
       await ctx.runMutation(internal.oferte.mutations.updateExcelOutput, {
         idGenerare: args.idGenerare,
