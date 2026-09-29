@@ -1,13 +1,9 @@
-version: '3.8'
-
 services:
   typesense:
     image: typesense/typesense:27.1
     container_name: typesense
     restart: unless-stopped
     ports:
-      # Legăm portul DOAR pe localhost (127.0.0.1) pentru securitate.
-      # Nu va fi expus public pe IP-ul VPS-ului.
       - "127.0.0.1:8108:8108"
     volumes:
       - ./typesense-data:/data
@@ -17,12 +13,37 @@ services:
       - '--data-dir=/data'
       - '--enable-cors'
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ./ollama-data:/root/.ollama
+    environment:
+      - OLLAMA_ORIGINS="*"
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+    ports:
+      # Interfața web va rula intern pe portul 3000
+      - "127.0.0.1:3000:8080"
+    environment:
+      # Îi spunem UI-ului cum să comunice direct cu containerul Ollama prin rețeaua Docker
+      - OLLAMA_BASE_URL=http://ollama:11434
+    volumes:
+      # Salvăm setările și conturile create în interfața web
+      - ./open-webui-data:/app/backend/data
+    depends_on:
+      - ollama
+
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
     restart: unless-stopped
-    # Rulăm agentul Cloudflare care va crea tunelul securizat.
     command: tunnel run
     environment:
-      # Token-ul de autorizare pentru tunelul tău. Se obține din dashboard-ul Cloudflare.
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
