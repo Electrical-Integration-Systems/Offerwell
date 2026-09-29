@@ -17,7 +17,9 @@ import type * as oferte_excel from "../oferte/excel.js";
 import type * as oferte_mutations from "../oferte/mutations.js";
 import type * as oferte_queries from "../oferte/queries.js";
 import type * as oferte_review from "../oferte/review.js";
+import type * as queries from "../queries.js";
 import type * as types_index from "../types/index.js";
+import type * as yahooFinance from "../yahooFinance.js";
 
 import type {
   ApiFromModules,
@@ -35,7 +37,9 @@ declare const fullApi: ApiFromModules<{
   "oferte/mutations": typeof oferte_mutations;
   "oferte/queries": typeof oferte_queries;
   "oferte/review": typeof oferte_review;
+  queries: typeof queries;
   "types/index": typeof types_index;
+  yahooFinance: typeof yahooFinance;
 }>;
 
 /**

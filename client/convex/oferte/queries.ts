@@ -119,3 +119,10 @@ export const getExchangeRateInternal = internalQuery({
     return rate?.valoare ?? null;
   },
 });
+
+export const getCursuriValutare = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("cursuriValutare").collect();
+  },
+});

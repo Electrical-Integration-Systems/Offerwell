@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Layers3, Search, Plus, Sparkles, FileSpreadsheet } from "lucide-react";
+import { Layers3, Search, Plus, Sparkles, FileSpreadsheet, ChartCandlestick } from "lucide-react";
 import { Button, Avatar, Tooltip } from "@heroui/react";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -23,6 +23,7 @@ export default function Header() {
             Offerwell
           </Link>
           <nav aria-label="Navigare principală" className="flex flex-wrap items-center gap-7 text-sm">
+            <Link href="/preturi" className="flex flex-row gap-2"><ChartCandlestick className="size-4" aria-hidden="true" /></Link>
             <Link href="/" className="flex flex-row gap-2"><Search className="size-4" aria-hidden="true" />Materiale</Link>
             <Link href="/adauga-material" className="flex flex-row gap-2"><Plus className="size-4" aria-hidden="true" />Adaugă material</Link>
             <Link href="/oferte" className="flex flex-row gap-2">

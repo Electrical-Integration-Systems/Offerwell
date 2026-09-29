@@ -12,10 +12,11 @@ import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { EXCEL_MIME_TYPE, MAX_EXCEL_BYTES, hasValidPrices, needsReview, type MatchedMaterial } from "../../convex/oferte/review";
 
-function ExcelDropzone({ file, disabled, onFileSelected }: {
+function ExcelDropzone({ file, disabled, onFileSelected, onAnalyze }: {
   file: File | null;
   disabled: boolean;
   onFileSelected: (file: File | null) => void;
+  onAnalyze?: () => void;
 }) {
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [error, setError] = useState("");
@@ -72,8 +73,17 @@ function ExcelDropzone({ file, disabled, onFileSelected }: {
       >
         <UploadCloud className={`size-8 ${isDraggingOver ? "text-accent" : "text-muted-foreground"}`} aria-hidden="true" />
         <div>
-          <p className="text-sm font-medium">Listă de cantități</p>
-          <p className="text-sm text-muted-foreground">Excel .xlsx · Maximum 10 MB</p>
+          {file ? (
+            <>
+              <p className="text-sm font-medium text-success">Fișier selectat</p>
+              <p className="text-sm font-semibold text-foreground truncate">{file.name}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-medium">Listă de cantități</p>
+              <p className="text-sm text-muted-foreground">Excel .xlsx · Maximum 10 MB</p>
+            </>
+          )}
         </div>
         <Input
           ref={inputRef}
@@ -92,28 +102,29 @@ function ExcelDropzone({ file, disabled, onFileSelected }: {
       </div>
       {error && <p role="alert" className="mt-2 text-sm text-danger">{error}</p>}
       {file && (
-        <div className="mt-3 flex flex-row items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3">
-          <div className="flex flex-row items-center gap-2 min-w-0">
-            <Sheet className="size-4 shrink-0 text-success" aria-hidden="true" />
-            <span className="truncate text-sm font-medium">{file.name}</span>
-          </div>
-          <Tooltip>
+        <div className="mt-2 flex gap-2 justify-center items-center flex-wrap">
           <Button
-            isIconOnly
-            variant="danger-soft"
-            size="sm"
-            aria-label="Elimină fișierul"
             isDisabled={disabled}
             onPress={() => {
               setError("");
               onFileSelected(null);
               if (inputRef.current) inputRef.current.value = "";
             }}
+            variant="danger-soft"
+            size="sm"
+            aria-label="Elimină fișierul"
           >
-            <Trash className="size-4" />
+            <Trash className="size-4" />Elimină
           </Button>
-          <Tooltip.Content>Elimină fișierul</Tooltip.Content>
-          </Tooltip>
+          {onAnalyze && (
+            <Button
+              isDisabled={disabled}
+              onPress={onAnalyze}
+              size="sm"
+            >
+              <Sparkles className="size-4" />Analizează Excel
+            </Button>
+          )}
         </div>
       )}
     </div>
@@ -446,6 +457,7 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
                     {!detail && <p className="text-muted-foreground">Adaugă lista de cantități pentru estimarea prețurilor folosind inteligență artificială</p>}
                 </div>
             </div>
+            {idGenerare && (
             <ol aria-label="Etape generare" className="mb-8 grid grid-cols-2 gap-3 text-xs sm:grid-cols-3 lg:grid-cols-6">
               {steps.map((step, index) => (
                 <li key={step} aria-current={activeStep === index ? "step" : undefined}
@@ -457,21 +469,24 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
                 </li>
               ))}
             </ol>
+            )}
             {idGenerare ? (
               null
             ) : <ExcelDropzone file={excelFile} disabled={busy} onFileSelected={(file) => {
               uploadedFile.current = null;
               currentOffer.current = null;
               setExcelFile(file);
-            }} />}
+            }} onAnalyze={() => { void processFile(); }} />}
             <p role="status" className="mb-4 min-h-5 text-sm text-muted-foreground">
               {activeStep !== null ? `${steps[activeStep]} în curs...` : saving ? "Se salvează validarea..." : ""}
             </p>
-            {!oferta?.hasMatched && (
-              <Button isDisabled={busy || !isAuthenticated || (idGenerare ? !oferta : !excelFile)} onPress={() => { void processFile(); }}>
-                {busy ? <Spinner size="sm" /> : <Sparkles className="size-4" />}
-                {idGenerare ? "Reia procesarea" : "Analizează Excel"}
-              </Button>
+            {idGenerare && !oferta?.hasMatched && (
+              <div className="flex justify-center">
+                <Button isDisabled={busy || !isAuthenticated || !oferta} onPress={() => { void processFile(); }}>
+                  {busy ? <Spinner size="sm" /> : <Sparkles className="size-4" />}
+                  Reia procesarea
+                </Button>
+              </div>
             )}
             
             <Drawer isOpen={isDrawerOpen} onOpenChange={(open) => {

@@ -1,7 +1,8 @@
 import { convexAuth, createAccount, retrieveAccount, modifyAccountCredentials, invalidateSessions, getAuthUserId } from "@convex-dev/auth/server";
 import { Password } from "@convex-dev/auth/providers/Password";
 import { v } from "convex/values";
-import { internalAction, query } from "./_generated/server";
+import { internalAction, internalMutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 function normalizeEmail(value: unknown): string {
   if (typeof value !== "string") {
@@ -85,6 +86,42 @@ export const changePassword = internalAction({
       account: { id: email, secret: args.newPassword },
     });
     await invalidateSessions(ctx, { userId: user._id });
+    return true;
+  },
+});
+
+export const deleteUserById = internalMutation({
+  args: {
+    userId: v.id("users"),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.userId);
+    return true;
+  },
+});
+
+export const deleteAccount = internalAction({
+  args: {
+    email: v.string(),
+    password: v.string(),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const email = normalizeEmail(args.email);
+    
+    // Verify credentials before deletion
+    const { user } = await retrieveAccount(ctx, {
+      provider: "password",
+      account: { id: email, secret: args.password },
+    });
+    
+    // Invalidate all sessions for this user
+    await invalidateSessions(ctx, { userId: user._id });
+    
+    // Delete the user document from the database via mutation
+    await ctx.runMutation(internal.auth.deleteUserById, { userId: user._id });
+    
     return true;
   },
 });

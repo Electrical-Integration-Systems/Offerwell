@@ -89,7 +89,7 @@ export default function OfertePage() {
                 </Link>
             </div>
             {loading ? <div role="status" className="flex items-center gap-3 py-10 text-sm text-muted-foreground justify-center"><Spinner size="sm" className="inline-block" />Se încarcă ofertele...</div>
-                : results.length === 0 ? <div className="border-y border-border py-14 text-center">
+                : results.length === 0 ? <div className="py-14 text-center">
                     <FileSpreadsheet className="mx-auto mb-4 size-9 text-muted-foreground" aria-hidden="true" />
                     <h2 className="text-lg font-semibold">Nu există oferte</h2>
                     <Link href="/generare-ai" className="mt-4 inline-flex items-center gap-2 text-sm underline"><Plus className="size-4" />Adaugă ofertă</Link>

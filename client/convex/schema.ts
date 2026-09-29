@@ -53,11 +53,19 @@ const schema = defineSchema({
     }))
     .index("by_oferta_and_rand", ["oferta", "rand"])
     .index("by_oferta_and_pending_and_rand", ["oferta", "pending", "rand"]),
-  cursuriValutare: defineTable({
-      moneda: v.string(),
-      valoare: v.number(), 
-      dataActualizare: v.string(), 
-  }).index("by_moneda", ["moneda"]),
+    cursuriValutare: defineTable({
+        moneda: v.string(),
+        valoare: v.number(), 
+        dataActualizare: v.string(), 
+    }).index("by_moneda", ["moneda"]),
+    preturiMetale: defineTable({
+    metal: v.string(),
+    valoareUSD: v.number(),
+    valoareRON: v.number(),
+    valoareEUR: v.number(),
+    unitate: v.string(),
+    dataActualizare: v.string(),
+    }).index("by_metal", ["metal"]),
 });
 
 export default schema;
