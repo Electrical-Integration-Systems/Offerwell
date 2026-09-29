@@ -1,14 +1,19 @@
 "use client";
 
-import { CursorPagination, PAGE_SIZE } from "@/components/cursor-pagination";
+import type { MaterialHit } from "@/types";
 
 import { useRef, useState, useEffect } from "react";
-import { Button, Card, Chip, Form, SearchField, Spinner, Tooltip, TextField, TextArea, NumberField, Label, FieldError, Fieldset, FieldGroup, Drawer, AlertDialog, toast } from "@heroui/react";
-import { PackageSearch, Search, Copy, Check, Pencil, Trash } from "lucide-react"; 
-import { searchTypesense, getNumarMateriale } from "@/lib/typesense/client";
-import type { MaterialHit } from "@/types";
+import { CursorPagination, PAGE_SIZE } from "@/components/cursor-pagination";
+import { PackageSearch, Search, Copy, Check, Pencil, Trash, VectorPolygon, TextSearch } from "lucide-react"; 
+import { searchTypesense, vectorSearchTypesense, hybridSearchTypesense, getNumarMateriale } from "@/lib/typesense/client";
+import { getEmbedding } from "@/lib/open-webui/client";
 import { PolaroidStrip } from "@/components/react-bits/PolaroidStrip";
-import { Table } from "@heroui/react";
+import { 
+  Button, Card, Chip, Form, SearchField, Spinner, Tooltip,
+  TextField, TextArea, NumberField, Label, FieldError,
+  Fieldset, FieldGroup, Drawer, AlertDialog, Table,
+  ToggleButton, toast
+} from "@heroui/react";
 
 const currency = new Intl.NumberFormat("ro-RO", { style: "currency", currency: "EUR" });
 
@@ -237,6 +242,9 @@ export default function Home() {
   const [deletingMaterial, setDeletingMaterial] = useState<MaterialHit | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [numarMateriale, setNumarMateriale] = useState<number | null>(null);
+
+  const [vectorSearch, setVectorSearch] = useState(true);
+  const [textSearch, setTextSearch] = useState(true);
   
   useEffect(() => {
     const fetchNumarMateriale = async () => {
@@ -265,12 +273,37 @@ export default function Home() {
     const currentRequest = ++requestId.current;
     setIsSearching(true);
     try {
-      const { results, total, page: resultPage } = await searchTypesense<MaterialHit>("materiale", value, "descriere", page, PAGE_SIZE);
-      if (currentRequest !== requestId.current) return;
-      setSearchResults(results);
-      setSearchedQuery(value);
-      setCurrentPage(resultPage);
-      setTotalResults(total);
+      if (vectorSearch && textSearch) {
+        const { results, total, page: resultPage } = await hybridSearchTypesense<MaterialHit>("materiale", value, await getEmbedding(value), "embedding", page, PAGE_SIZE);
+        if (currentRequest !== requestId.current) return;
+        setSearchResults(results);
+
+        console.log(results);
+
+        setSearchedQuery(value);
+        setCurrentPage(resultPage);
+        setTotalResults(total);
+        return;
+      } else if (vectorSearch) {
+        const { results, total, page: resultPage } = await vectorSearchTypesense<MaterialHit>("materiale", await getEmbedding(value), "embedding", page, PAGE_SIZE);
+        if (currentRequest !== requestId.current) return;
+        setSearchResults(results);
+
+        console.log(results);
+
+        setSearchedQuery(value);
+        setCurrentPage(resultPage);
+        setTotalResults(total);
+        return;
+      } else {
+        const { results, total, page: resultPage } = await searchTypesense<MaterialHit>("materiale", value, "descriere", page, PAGE_SIZE);
+        if (currentRequest !== requestId.current) return;
+        setSearchResults(results);
+        setSearchedQuery(value);
+        setCurrentPage(resultPage);
+        setTotalResults(total);
+        return;
+      }
     } catch {
       if (currentRequest === requestId.current) {
         const id = toast.danger("Căutarea nu este disponibilă momentan. Încearcă din nou.", {
@@ -414,6 +447,26 @@ export default function Home() {
     }
   };
 
+  const handleToggleVectorSearch = (enabled: boolean) => {
+    // 1. Aplicăm decizia utilizatorului de a schimba starea
+    setVectorSearch(enabled);
+    
+    // 2. Dacă a ales să OPREASCĂ vector search, iar text search e deja oprit, îl aprindem pe celălalt
+    if (!enabled && !textSearch) {
+      setTextSearch(true);
+    }
+  };
+
+  const handleToggleTextSearch = (enabled: boolean) => {
+    // 1. Aplicăm decizia utilizatorului
+    setTextSearch(enabled);
+    
+    // 2. Dacă a ales să OPREASCĂ text search, iar vector search e deja oprit, îl aprindem pe celălalt
+    if (!enabled && !vectorSearch) {
+      setVectorSearch(true);
+    }
+  };
+
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-8 sm:py-14">
       <div className="flex flex-col md:flex-row mb-10 border-b border-border pb-6 justify-between gap-6 md:gap-0">
@@ -439,6 +492,12 @@ export default function Home() {
             <SearchField.ClearButton aria-label="Șterge căutarea" />
           </SearchField.Group>
         </SearchField>
+        <ToggleButton
+          aria-label="Toggle Vector Search" className="size-12 rounded-full" isSelected={textSearch} onChange={(selected) => handleToggleTextSearch(selected)}
+        ><TextSearch className="size-5" /></ToggleButton>
+        <ToggleButton
+          aria-label="Toggle Vector Search" className="size-12 rounded-full" isSelected={vectorSearch} onChange={(selected) => handleToggleVectorSearch(selected)}
+        ><VectorPolygon className="size-5" /></ToggleButton>
         <Button type="submit" isIconOnly aria-label="Caută" isDisabled={!query.trim() || isSearching} className="size-12 rounded-full">
           {isSearching ? <Spinner size="sm" /> : <Search className="size-5" />}
         </Button>

@@ -2,7 +2,6 @@ import type { CollectionCreateSchema } from "typesense/lib/Typesense/Collections
 import Typesense from "typesense";
 import fs from "fs";
 import csv from "csv-parser";
-
 const collectionName = "materiale";
 
 type Material = {
@@ -10,6 +9,7 @@ type Material = {
   pretAchizitie: number;
   pretVanzare: number;
   manopera: number;
+  embedding: number[];
 };
 
 const schema: CollectionCreateSchema = {
@@ -19,6 +19,7 @@ const schema: CollectionCreateSchema = {
         {'name': 'pretAchizitie', 'type': 'float'},
         {'name': 'pretVanzare', 'type': 'float'},
         {'name': 'manopera', 'type': 'float'},
+        {'name': 'embedding', 'type': 'float[]', 'num_dim': 768}
     ]
 }
 
@@ -46,6 +47,7 @@ function loadMaterialsFromCSV(filePath: string): Promise<Material[]> {
                     pretAchizitie: parseFloat(row.pretAchizitie?.replace(/,/g, '') || '0') || 0,
                     pretVanzare: parseFloat(row.pretVanzare?.replace(/,/g, '') || '0') || 0,
                     manopera: parseFloat(row.manopera?.replace(/,/g, '') || '0') || 0,
+                    embedding: [],
                 });
             })
             .on('end', () => {
@@ -92,6 +94,38 @@ async function ensureDocuments(collectionName: string, documents: Material[]) {
     }
 }
 
+async function generateVPSEmbedding(text: string): Promise<number[]> {
+    const baseURL = process.env.OPEN_WEBUI_BASE_URL || "";
+    const apiKey = process.env.OPEN_WEBUI_API_KEY || "";
+    
+    // Folosim endpoint-ul de ollama expus de Open WebUI
+    const endpoint = `${baseURL}/ollama/api/embed`;
+
+    const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model: "nomic-embed-text:latest",
+            input: text
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(`Eroare generare vector (status ${response.status}): ${await response.text()}`);
+    }
+
+    const data: any = await response.json();
+    
+    if (!data.embeddings || data.embeddings.length === 0) {
+         throw new Error(`Modelul nu a returnat niciun vector pentru: ${text}`);
+    }
+
+    return data.embeddings[0]; 
+}
+
 async function run() {
     if (!process.env.TYPESENSE_API_KEY || !process.env.TYPESENSE_HOST) {
         console.error("TYPESENSE_API_KEY or TYPESENSE_HOST is not set in the environment variables.");
@@ -99,12 +133,21 @@ async function run() {
     }
 
     try {
-        const csvData = await loadMaterialsFromCSV("collections/materiale.csv");
+        const csvData: Material[] = await loadMaterialsFromCSV("collections/materiale.csv");
         
         if (csvData.length === 0) {
             console.warn("No data found in CSV. Aborting import.");
             return;
         }
+
+        console.log(`Generăm vectorii pentru ${csvData.length} materiale...`);
+        
+        // 1. Generăm toți vectorii
+        for (const item of csvData) {
+            item.embedding = await generateVPSEmbedding(item.descriere);
+        }
+
+        fs.writeFileSync('collections/materiale.json', JSON.stringify(csvData, null, 2));
 
         await deleteCollection(collectionName);
         await ensureCollection(collectionName);
