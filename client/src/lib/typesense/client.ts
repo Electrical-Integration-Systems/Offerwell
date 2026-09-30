@@ -147,6 +147,7 @@ export async function hybridSearchTypesense<T extends object>(
   collectionName: string,
   searchQuery: string, // <-- ADĂUGAT: Textul real pentru componenta hibridă
   embedding: number[],
+  alpha: number,
   vectorField: string = "embedding",
   page: number = 1,
   perPage: number = 100
@@ -158,7 +159,9 @@ export async function hybridSearchTypesense<T extends object>(
       // Adăugăm `distance_threshold`. 
       // La Nomic-Embed, distanța variază între 0 (perfect) și 2 (opus).
       // Un threshold de 0.8 taie rezultatele care nu au nicio legătură semantică.
-      const vectorQuery = `${vectorField}:([${embedding.join(",")}], k:${maxPerPage}, distance_threshold: 0.8)`;
+      // Alpha trebuie să fie între 0 și 1 (convertim din slider 0-100)
+      const normalizedAlpha = alpha / 100;
+      const vectorQuery = `${vectorField}:([${embedding.join(",")}], k:${maxPerPage}, distance_threshold: 0.8, alpha: ${normalizedAlpha})`;
       
       const searchRequests = {
         searches: [

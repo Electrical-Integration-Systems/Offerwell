@@ -6,4 +6,11 @@ export type Material = {
   manopera: number;
 };
 
+export type MaterialExtras = {
+      rand: number;
+      descriere: string;
+      cantitate: number;
+      unitate: string;
+    };
+
 export type MaterialHit = Material;

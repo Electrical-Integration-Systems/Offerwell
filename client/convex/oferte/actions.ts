@@ -6,9 +6,10 @@ import OpenAI from "openai";
 import { z } from "zod";
 import * as XLSX from "xlsx";
 import Typesense from "typesense";
-import type { MaterialHit } from "../types";
+import type { MaterialExtras, MaterialHit } from "../types";
 import { populateWorkbook } from "./excel";
 import { assertReadyForExport, calculateMatchQuality, EXCEL_MIME_TYPE, hasValidPrices, isExactMatch, MAX_DESCRIPTION_LENGTH, MAX_EXCEL_BYTES, MAX_MATERIALS } from "./review";
+import { blendSearch, textSearch } from "../typesense/client";
 
 async function readWorkbook(file: Blob) {
   if (!file.size || file.size > MAX_EXCEL_BYTES) throw new Error("Fisierul Excel trebuie sa aiba maximum 10 MB.");
@@ -228,38 +229,16 @@ export const cautaSiPopuleazaPreturi = action({
       throw new Error("Nu există materiale extrase pentru această generare.");
     }
 
-    if (!process.env.TYPESENSE_SEARCH_KEY) throw new Error("TYPESENSE_SEARCH_KEY nu este configurata in Convex.");
-    const typesenseClient = new Typesense.Client({
-      nodes: [{ host: process.env.TYPESENSE_HOST || "typesense.bmseis.software", port: 443, protocol: "https" }],
-      apiKey: process.env.TYPESENSE_SEARCH_KEY,
-      connectionTimeoutSeconds: 5,
-      numRetries: 1,
-    });
-
-    // 1. Definim o interfață locală pentru a ajuta TypeScript să înțeleagă ce e 'mat'
-    type MaterialExtras = {
-      rand: number;
-      descriere: string;
-      cantitate: number;
-      unitate: string;
-    };
-
     const materialePotrivite = [];
     for (let offset = 0; offset < generare.materialeExtrase.length; offset += 10) {
       const batch = await Promise.all(
       // Am adăugat tipul explicit (mat: MaterialExtras) aici:
       generare.materialeExtrase.slice(offset, offset + 10).map(async (mat: MaterialExtras) => {
         try {
-          // 2. Am adăugat genericul <MaterialHit> colecției, astfel TypeScript 
-          // știe că bestMatch.document va conține .descriere, .pretAchizitie etc.
-          const searchResults = await typesenseClient
-            .collections<MaterialHit>("materiale")
-            .documents()
-            .search({
-              q: mat.descriere,
-              query_by: "descriere",
-              per_page: 1, 
-            });
+          // Typesense auto-generates embeddings from the query string
+          const searchResults = await blendSearch(mat.descriere);
+
+          console.log("searchResults: ", searchResults);
 
           const bestMatch = searchResults.hits?.[0];
           const matchedTokens = bestMatch?.highlight.descriere?.matched_tokens ?? [];

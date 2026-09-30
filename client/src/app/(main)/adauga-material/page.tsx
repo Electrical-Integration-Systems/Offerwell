@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Alert, Button, FieldError, FieldGroup, Fieldset, Form, Label, NumberField, Spinner, TextArea, TextField } from "@heroui/react";
-import { Toast, toast } from '@heroui/react';
+import { 
+  Button, FieldError, FieldGroup, Fieldset, Form,
+  Label, NumberField, Spinner, TextArea, TextField, toast
+} from "@heroui/react";
 import { RotateCcw, Save } from "lucide-react";
 
 const priceFields = [
@@ -10,25 +12,20 @@ const priceFields = [
   { name: "pretVanzare", label: "Preț vânzare" },
   { name: "manopera", label: "Manoperă" },
 ] as const;
-const emptyPrices = { pretAchizitie: NaN, pretVanzare: NaN, manopera: NaN };
 
 export default function AdaugaMaterialPage() {
-  const [prices, setPrices] = useState(emptyPrices);
+  const [prices, setPrices] = useState({ pretAchizitie: NaN, pretVanzare: NaN, manopera: NaN });
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const submitting = useRef(false);
 
-  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (submitting.current) return;
     const form = event.currentTarget;
     const formData = new FormData(form);
     submitting.current = true;
     setIsSaving(true);
-    setError("");
-    setSuccess(false);
     setValidationErrors({});
     try {
       const response = await fetch("/api/material", {
@@ -42,13 +39,28 @@ export default function AdaugaMaterialPage() {
         throw new Error(result.error || "Materialul nu a putut fi salvat.");
       }
       form.reset();
-      setSuccess(true);
+      const id = toast.success("Material adăugat cu succes.", {
+        actionProps: {
+          children: "Dismiss",
+          onPress: () => toast.close(id)
+        }
+      });
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Conexiunea a eșuat. Încearcă din nou.");
+      const id = toast.danger(error instanceof Error ? error.message : "Conexiunea a eșuat. Încearcă din nou.", {
+        actionProps: {
+          children: "Dismiss",
+          onPress: () => toast.close(id)
+        }
+      });
     } finally {
       submitting.current = false;
       setIsSaving(false);
     }
+  };
+
+  const handleReset = () => {
+    setPrices({ pretAchizitie: NaN, pretVanzare: NaN, manopera: NaN });
+    setValidationErrors({});
   };
 
   return (
@@ -57,14 +69,7 @@ export default function AdaugaMaterialPage() {
         <p className="mb-2 text-sm font-medium text-accent">Catalog</p>
         <h1 className="text-3xl font-semibold">Adaugă material</h1>
       </div>
-      <Form onSubmit={onSubmit} validationErrors={validationErrors} onReset={() => {
-        setPrices(emptyPrices);
-        setValidationErrors({});
-        setError("");
-        setSuccess(false);
-      }} className="w-full">
-        {success && <Alert status="success" role="status" className="mb-6"><Alert.Indicator /><Alert.Content><Alert.Title>Material adăugat.</Alert.Title></Alert.Content></Alert>}
-        {error && <Alert status="danger" role="alert" className="mb-6"><Alert.Indicator /><Alert.Content><Alert.Title>{error}</Alert.Title></Alert.Content></Alert>}
+      <Form onSubmit={handleSubmit} validationErrors={validationErrors} onReset={handleReset} className="w-full">
         <Fieldset className="w-full gap-10">
           <FieldGroup className="gap-6 flex flex-col">
             <TextField isRequired name="descriere" maxLength={500} validate={(value) => value.trim().length < 3 ? "Descrierea trebuie să aibă cel puțin 3 caractere." : null}>

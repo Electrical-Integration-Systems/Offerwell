@@ -29,13 +29,10 @@ services:
     container_name: open-webui
     restart: unless-stopped
     ports:
-      # Interfața web va rula intern pe portul 3000
       - "127.0.0.1:3000:8080"
     environment:
-      # Îi spunem UI-ului cum să comunice direct cu containerul Ollama prin rețeaua Docker
       - OLLAMA_BASE_URL=http://ollama:11434
     volumes:
-      # Salvăm setările și conturile create în interfața web
       - ./open-webui-data:/app/backend/data
     depends_on:
       - ollama

@@ -8,4 +8,5 @@ export type Material = {
 
 export type MaterialHit = Material & {
   matchedWords?: string[];
+  embedding?: number[];
 };

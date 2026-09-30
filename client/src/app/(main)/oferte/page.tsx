@@ -30,8 +30,6 @@ export default function OfertePage() {
     const [deletingOfertaId, setDeletingOfertaId] = useState<Id<"oferte"> | null>(null);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [error, setError] = useState("");
-    const [successMessage, setSuccessMessage] = useState("");
 
     const handleDelete = (id: Id<"oferte">) => {
         setDeletingOfertaId(id);
@@ -42,8 +40,6 @@ export default function OfertePage() {
         if (!deletingOfertaId) return;
 
         setIsDeleting(true);
-        setError("");
-        setSuccessMessage("");
 
         try {
             await deleteOferta({ idGenerare: deletingOfertaId });

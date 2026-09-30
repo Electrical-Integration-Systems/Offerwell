@@ -1,23 +1,10 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { api } from "@/../convex/_generated/api";
 import { Table, Spinner, Button } from '@heroui/react';
+import { api } from "@/../convex/_generated/api";
+import { formatDateUTC3 } from "@/lib/date";
 import { useAction } from "convex/react";
-
-function formatDateUTC3(isoString: string): string {
-    const date = new Date(isoString);
-    // Format in UTC+3 timezone
-    return date.toLocaleString("ro-RO", {
-        timeZone: "Europe/Bucharest",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit"
-    });
-}
+import { useQuery } from "convex/react";
 
 export default function PreturiPage() {
     const cursuriValutare = useQuery(api.queries.getCursuriValutare);
@@ -27,10 +14,10 @@ export default function PreturiPage() {
     const updateCopperPrice = useAction(api.yahooFinance.updateCopperPrice);
 
     const handleUpdate = async () => {
-        await updateExchangeRates();
-        await updateCopperPrice();
+        updateExchangeRates();
+        updateCopperPrice();
     };
-    
+
     return(
         <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-8 sm:py-14">
             <div className="flex flex-col md:flex-row mb-10 border-b border-border pb-6 justify-between gap-6 md:gap-0 items-center">

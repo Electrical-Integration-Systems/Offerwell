@@ -147,7 +147,7 @@ function HighlightedDescription({ text, matchedTokens = [] }: { text: string; ma
   return (
     <p className="font-medium">
       {text.split(/([\p{L}\p{N}]+)/gu).map((part, index) => matches.has(normalize(part))
-        ? <mark className="rounded-sm bg-warning/30 px-0.5 text-foreground">{part}</mark>
+        ? <mark key={index} className="rounded-sm bg-warning/30 px-0.5 text-foreground">{part}</mark>
         : part)}
     </p>
   );

@@ -4,226 +4,17 @@ import type { MaterialHit } from "@/types";
 
 import { useRef, useState, useEffect } from "react";
 import { CursorPagination, PAGE_SIZE } from "@/components/cursor-pagination";
-import { PackageSearch, Search, Copy, Check, Pencil, Trash, VectorPolygon, TextSearch } from "lucide-react"; 
+import { PackageSearch, Search, Pencil, VectorPolygon, TextSearch } from "lucide-react"; 
 import { searchTypesense, vectorSearchTypesense, hybridSearchTypesense, getNumarMateriale } from "@/lib/typesense/client";
 import { getEmbedding } from "@/lib/open-webui/client";
 import { PolaroidStrip } from "@/components/react-bits/PolaroidStrip";
 import { 
-  Button, Card, Chip, Form, SearchField, Spinner, Tooltip,
-  TextField, TextArea, NumberField, Label, FieldError,
-  Fieldset, FieldGroup, Drawer, AlertDialog, Table,
-  ToggleButton, toast
+  Button, Chip, Form, SearchField, Spinner,
+  TextField, TextArea, NumberField, Label,
+  Fieldset, FieldGroup, Drawer, AlertDialog,
+  FieldError, ToggleButton, Slider, toast
 } from "@heroui/react";
-
-const currency = new Intl.NumberFormat("ro-RO", { style: "currency", currency: "EUR" });
-
-function MaterialeCards({
-  searchResults,
-  copiedField,
-  handleCopyPrice,
-}: {
-  searchResults: MaterialHit[];
-  copiedField: string | null;
-  handleCopyPrice: (price: number, index: number, field: string) => void;
-}) {
-  return (
-    <div className="space-y-2">
-        {searchResults.map((material, index) => (
-        <Card key={index} className="rounded-4xl bg-surface p-0 shadow-none px-5 hover:shadow-md">
-            <Card.Content className="gap-5 p-5 sm:p-6">
-            <div className="flex items-center justify-between">
-                <h3 className="break-words text-base font-semibold">{material.descriere}</h3>
-                <div className="flex flex-row gap-2">
-                <Button 
-                    variant="primary" 
-                    size="sm" 
-                    className="gap-2"
-                >
-                    Edit
-                </Button>
-                <Button 
-                    variant="danger" 
-                    size="sm" 
-                    className="gap-2"
-                >
-                    Delete
-                </Button>
-                </div>
-            </div>
-            <dl className="flex flex-row gap-3 items-center justify-around border-t border-border pt-4">
-                {([
-                ["Preț achiziție", material.pretAchizitie, "text-danger", "pretAchizitie"],
-                ["Preț vânzare", material.pretVanzare, "text-accent", "pretVanzare"],
-                ["Manoperă", material.manopera, "text-success", "manopera"],
-                ] as const).map(([label, price, color, field]) => (
-                <div key={label} className="min-w-0">
-                    <dt className="mb-1 text-sm text-muted">{label}</dt>
-                    <div className="flex items-center gap-2">
-                      <dd className={`break-words text-lg font-semibold tabular-nums ${color}`}>{currency.format(price)}</dd>
-                      <Tooltip delay={0}>
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          className="min-w-fit h-fit p-1"
-                          onPress={() => handleCopyPrice(price, index, field)}
-                        >
-                          {copiedField === `${index}-${field}` ? <Check className="size-3" /> : <Copy className="size-3" />}
-                        </Button>
-                        <Tooltip.Content>
-                          <Tooltip.Arrow />
-                          Copiază preț
-                        </Tooltip.Content>
-                      </Tooltip>
-                    </div>
-                </div>
-                ))}
-            </dl>
-            </Card.Content>
-        </Card>
-        ))}
-    </div>
-  );
-}
-
-function MaterialeTable({
-  searchResults,
-  copiedField,
-  handleCopyPrice,
-  onEditStart,
-  onDeleteStart,
-}: {
-  searchResults: MaterialHit[];
-  copiedField: string | null;
-  handleCopyPrice: (price: number, index: number, field: string) => void;
-  onEditStart: (material: MaterialHit) => void;
-  onDeleteStart: (material: MaterialHit) => void;
-}) {
-  const highlightText = (text: string, matchedWords: string[] | undefined) => {
-    console.log("highlightText called with:", { text: text.substring(0, 50), matchedWords });
-    if (!matchedWords || matchedWords.length === 0) {
-      console.log("No matched words, returning text as-is");
-      return text;
-    }
-    
-    // Create a pattern that matches any of the matched words (case-insensitive)
-    const pattern = new RegExp(`(${matchedWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
-    console.log("Pattern:", pattern);
-    
-    const parts = text.split(pattern);
-    console.log("Parts:", parts);
-    
-    return parts.map((part, index) => {
-      if (matchedWords.some(w => w.toLowerCase() === part.toLowerCase())) {
-        console.log("Highlighting:", part);
-        return <mark key={index} className="bg-yellow-200 dark:bg-yellow-800 font-semibold">{part}</mark>;
-      }
-      return part;
-    });
-  };
-
-  return (
-    <Table>
-      <Table.ScrollContainer>
-        <Table.Content aria-label="Materiale" className="min-w-[600px]">
-          <Table.Header>
-                <Table.Column isRowHeader className="text-left">Descriere</Table.Column>
-                <Table.Column className="text-center">Preț Achiziție</Table.Column>
-                <Table.Column className="text-center">Preț Vânzare</Table.Column>
-                <Table.Column className="text-center">Manoperă</Table.Column>
-                <Table.Column className="text-center">Acțiuni</Table.Column>
-            </Table.Header>
-          <Table.Body>
-            {searchResults.map((material, index) => (
-              <Table.Row key={material.id}>
-                <Table.Cell>
-                  {highlightText(material.descriere, material.matchedWords)}
-                </Table.Cell>
-                <Table.Cell className="text-danger font-semibold">
-                  <div className="flex items-center gap-2 justify-end">
-                    {currency.format(material.pretAchizitie)}
-                    <Tooltip delay={0}>
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="danger-soft"
-                        className="min-w-fit h-fit p-1"
-                        onPress={() => handleCopyPrice(material.pretAchizitie, index, "pretAchizitie")}
-                      >
-                        {copiedField === `${index}-pretAchizitie` ? <Check className="size-3" /> : <Copy className="size-3" />}
-                      </Button>
-                      <Tooltip.Content>
-                        <Tooltip.Arrow />
-                        Copiază preț
-                      </Tooltip.Content>
-                    </Tooltip>
-                  </div>
-                </Table.Cell>
-                <Table.Cell className="text-accent font-semibold">
-                  <div className="flex items-center gap-2 justify-end">
-                    {currency.format(material.pretVanzare)}
-                    <Tooltip delay={0}>
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="secondary"
-                        className="min-w-fit h-fit p-1"
-                        onPress={() => handleCopyPrice(material.pretVanzare, index, "pretVanzare")}
-                      >
-                        {copiedField === `${index}-pretVanzare` ? <Check className="size-3" /> : <Copy className="size-3" />}
-                      </Button>
-                      <Tooltip.Content>
-                        <Tooltip.Arrow />
-                        Copiază preț
-                      </Tooltip.Content>
-                    </Tooltip>
-                  </div>
-                </Table.Cell>
-                <Table.Cell className="text-success font-semibold">
-                  <div className="flex items-center gap-2 justify-end">
-                    {currency.format(material.manopera)}
-                    <Tooltip delay={0}>
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="tertiary"
-                        className="min-w-fit h-fit p-1"
-                        onPress={() => handleCopyPrice(material.manopera, index, "manopera")}
-                      >
-                        {copiedField === `${index}-manopera` ? <Check className="size-3" /> : <Copy className="size-3" />}
-                      </Button>
-                      <Tooltip.Content>
-                        <Tooltip.Arrow />
-                        Copiază preț
-                      </Tooltip.Content>
-                    </Tooltip>
-                  </div>
-                </Table.Cell>
-                <Table.Cell className="flex flex-row items-center justify-end gap-2">
-                  <Button 
-                    isIconOnly
-                    variant="primary" 
-                    size="sm"
-                    onPress={() => onEditStart(material)}
-                  >
-                    <Pencil className="size-4" />
-                  </Button>
-                  <Button 
-                    isIconOnly
-                    variant="danger" 
-                    size="sm"
-                    onPress={() => onDeleteStart(material)}
-                  >
-                    <Trash className="size-4" />
-                  </Button>
-                </Table.Cell>
-              </Table.Row>
-            ))}
-          </Table.Body>
-        </Table.Content>
-      </Table.ScrollContainer>
-    </Table>
-  );
-}
+import { MaterialeTable } from "@/components/materiale/MaterialeTable";
 
 export default function Home() {
   const [query, setQuery] = useState("");
@@ -237,7 +28,7 @@ export default function Home() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingData, setEditingData] = useState<MaterialHit | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deletingMaterial, setDeletingMaterial] = useState<MaterialHit | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -245,6 +36,7 @@ export default function Home() {
 
   const [vectorSearch, setVectorSearch] = useState(true);
   const [textSearch, setTextSearch] = useState(true);
+  const [alphaHybridSearch, setAlphaHybridSearch] = useState(50);
   
   useEffect(() => {
     const fetchNumarMateriale = async () => {
@@ -257,7 +49,7 @@ export default function Home() {
     };
     fetchNumarMateriale();
   }, []);
-  
+
   const requestId = useRef(0);
 
   const performSearch = async (value: string, page: number = 1) => {
@@ -274,7 +66,7 @@ export default function Home() {
     setIsSearching(true);
     try {
       if (vectorSearch && textSearch) {
-        const { results, total, page: resultPage } = await hybridSearchTypesense<MaterialHit>("materiale", value, await getEmbedding(value), "embedding", page, PAGE_SIZE);
+        const { results, total, page: resultPage } = await hybridSearchTypesense<MaterialHit>("materiale", value, await getEmbedding(value), alphaHybridSearch,  "embedding", page, PAGE_SIZE);
         if (currentRequest !== requestId.current) return;
         setSearchResults(results);
 
@@ -448,27 +240,23 @@ export default function Home() {
   };
 
   const handleToggleVectorSearch = (enabled: boolean) => {
-    // 1. Aplicăm decizia utilizatorului de a schimba starea
     setVectorSearch(enabled);
-    
-    // 2. Dacă a ales să OPREASCĂ vector search, iar text search e deja oprit, îl aprindem pe celălalt
+
     if (!enabled && !textSearch) {
       setTextSearch(true);
     }
   };
 
   const handleToggleTextSearch = (enabled: boolean) => {
-    // 1. Aplicăm decizia utilizatorului
     setTextSearch(enabled);
-    
-    // 2. Dacă a ales să OPREASCĂ text search, iar vector search e deja oprit, îl aprindem pe celălalt
+
     if (!enabled && !vectorSearch) {
       setVectorSearch(true);
     }
   };
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-8 sm:py-14">
+    <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-8 sm:py-14">
       <div className="flex flex-col md:flex-row mb-10 border-b border-border pb-6 justify-between gap-6 md:gap-0">
         <div className="flex-shrink-0">
           <p className="mb-2 text-sm font-medium text-accent whitespace-nowrap">
@@ -492,6 +280,16 @@ export default function Home() {
             <SearchField.ClearButton aria-label="Șterge căutarea" />
           </SearchField.Group>
         </SearchField>
+        {textSearch && vectorSearch && (
+          <Slider className="w-[100px] max-w-xs" defaultValue={50} onChange={(value) => setAlphaHybridSearch(Array.isArray(value) ? value[0] : value)}>
+            <Label>Alpha</Label>
+            <Slider.Output />
+            <Slider.Track>
+              <Slider.Fill />
+              <Slider.Thumb />
+            </Slider.Track>
+          </Slider>
+        )}
         <ToggleButton
           aria-label="Toggle Vector Search" className="size-12 rounded-full" isSelected={textSearch} onChange={(selected) => handleToggleTextSearch(selected)}
         ><TextSearch className="size-5" /></ToggleButton>
@@ -517,7 +315,7 @@ export default function Home() {
         )}
 
         {!isSearching && searchResults.length > 0 && (
-          <MaterialeTable 
+          <MaterialeTable
             searchResults={searchResults} 
             copiedField={copiedField} 
             handleCopyPrice={handleCopyPrice}
