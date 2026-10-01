@@ -44,3 +44,32 @@ services:
     command: tunnel run
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+
+  laya:
+    image: python:3.12-slim
+    container_name: laya
+    restart: unless-stopped
+    working_dir: /app
+
+    ports:
+      - "127.0.0.1:8081:8000"
+
+    volumes:
+      - ./laya-data:/root/.cache/huggingface
+
+    environment:
+      HF_HOME: /root/.cache/huggingface
+      PYTHONUNBUFFERED: "1"
+      USE_TF: "0"
+
+      LAYA_SERVE_BACKEND: "laya"
+      LAYA_SERVE_DEVICE: "cpu"
+      LAYA_SERVE_PRELOAD: "true"
+      LAYA_SERVE_API_KEY: ${LAYA_API_KEY}
+
+    command:
+      - sh
+      - -c
+      - |
+        pip install --no-cache-dir -U "laya[serve]"
+        laya-serve
