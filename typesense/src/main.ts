@@ -15,7 +15,6 @@ async function run() {
     
     await deleteCollection("materiale");
     await ensureCollection("materiale");
-    console.log("Începem importul. Typesense va genera automat vectorii...");
     await ensureDocuments("materiale", csvData);
 
   } catch (err) {

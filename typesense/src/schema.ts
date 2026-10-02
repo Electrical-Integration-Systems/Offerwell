@@ -14,7 +14,7 @@ const schema: CollectionCreateSchema = {
             embed: {
                 from: ['descriere'],
                 model_config: {
-                    model_name: 'openai/nomic-embed-text:latest',
+                    model_name: 'openai/nomic-embed-text:v1.5',
                     api_key: '',
                     url: 'http://ollama:11434'
                 }

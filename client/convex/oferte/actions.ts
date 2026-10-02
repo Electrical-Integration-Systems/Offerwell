@@ -5,11 +5,11 @@ import { internal } from "../_generated/api";
 import OpenAI from "openai";
 import { z } from "zod";
 import * as XLSX from "xlsx";
-import Typesense from "typesense";
-import type { MaterialExtras, MaterialHit } from "../types";
+import type { MaterialExtras } from "../types";
 import { populateWorkbook } from "./excel";
 import { assertReadyForExport, calculateMatchQuality, EXCEL_MIME_TYPE, hasValidPrices, isExactMatch, MAX_DESCRIPTION_LENGTH, MAX_EXCEL_BYTES, MAX_MATERIALS } from "./review";
-import { blendSearch, textSearch } from "../typesense/client";
+import { blendSearch, textSearch } from "../typesense";
+import { alegePret } from "../laya";
 
 async function readWorkbook(file: Blob) {
   if (!file.size || file.size > MAX_EXCEL_BYTES) throw new Error("Fisierul Excel trebuie sa aiba maximum 10 MB.");
@@ -235,12 +235,43 @@ export const cautaSiPopuleazaPreturi = action({
       // Am adăugat tipul explicit (mat: MaterialExtras) aici:
       generare.materialeExtrase.slice(offset, offset + 10).map(async (mat: MaterialExtras) => {
         try {
-          // Typesense auto-generates embeddings from the query string
-          const searchResults = await blendSearch(mat.descriere);
+          // Typesense auto-generates embeddings from the query string - get k=10 results
+          const searchResults = await blendSearch(mat.descriere, 10);
 
           console.log("searchResults: ", searchResults);
 
-          const bestMatch = searchResults.hits?.[0];
+          // Extract materials from the search results to pass to alegePret
+          const referinte = searchResults.hits?.map(hit => hit.document) ?? [];
+          
+          if (referinte.length === 0) {
+            return {
+              rand: mat.rand,
+              descriereOriginala: mat.descriere,
+              cantitate: mat.cantitate,
+              unitate: mat.unitate,
+              descriereGasita: "Nu a fost găsit în baza de date",
+              matchScore: 1,
+              matchedTokens: [],
+              requiresValidation: true,
+              validated: false,
+              pretAchizitie: 0,
+              pretVanzare: 0,
+              manopera: 0,
+            };
+          }
+
+          // Call alegePret to choose the best material based on AI reasoning
+          const layaResponse = await alegePret(mat.descriere, referinte);
+          const chosenDescription = layaResponse.answers?.price?.choice;
+
+          // Find the chosen material in the search results
+          const chosenMaterial = referinte.find(
+            (ref) => ref.descriere === chosenDescription
+          ) || referinte[0];
+
+          const bestMatch = searchResults.hits?.find(
+            hit => hit.document.descriere === chosenMaterial.descriere
+          );
           const matchedTokens = bestMatch?.highlight.descriere?.matched_tokens ?? [];
 
           return {
@@ -248,17 +279,17 @@ export const cautaSiPopuleazaPreturi = action({
             descriereOriginala: mat.descriere,
             cantitate: mat.cantitate,
             unitate: mat.unitate,
-            descriereGasita: bestMatch ? bestMatch.document.descriere : "Nu a fost găsit în baza de date",
+            descriereGasita: chosenMaterial.descriere,
             matchScore: bestMatch
               ? calculateMatchQuality(mat.descriere, bestMatch.text_match_info?.tokens_matched ?? matchedTokens.length, matchedTokens)
               : 1,
             matchedTokens,
-            requiresValidation: !bestMatch || !isExactMatch(mat.descriere, bestMatch.document.descriere)
-              || mat.cantitate <= 0 || !hasValidPrices({ ...bestMatch.document, cantitate: mat.cantitate }),
+            requiresValidation: !isExactMatch(mat.descriere, chosenMaterial.descriere)
+              || mat.cantitate <= 0 || !hasValidPrices({ ...chosenMaterial, cantitate: mat.cantitate }),
             validated: false,
-            pretAchizitie: bestMatch ? bestMatch.document.pretAchizitie : 0,
-            pretVanzare: bestMatch ? bestMatch.document.pretVanzare : 0,
-            manopera: bestMatch ? bestMatch.document.manopera : 0,
+            pretAchizitie: chosenMaterial.pretAchizitie,
+            pretVanzare: chosenMaterial.pretVanzare,
+            manopera: chosenMaterial.manopera,
           };
         } catch (err) {
           console.error(`Eroare la cautarea materialului ${mat.descriere}:`, err);

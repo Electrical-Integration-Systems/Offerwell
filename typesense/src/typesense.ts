@@ -17,11 +17,11 @@ const client = new Typesense.Client({
 export async function ensureCollection(collectionName: string) {
     try {
         await client.collections(collectionName).retrieve();
-        console.log("Collection already exists");
+        console.log(`Collection ${collectionName} already exists`);
     } catch (error) {
         if (error instanceof Typesense.Errors.ObjectNotFound) {
             await client.collections().create(schema);
-            console.log("Collection created");
+            console.log(`Collection ${collectionName} created`);
         } else {
             throw error;
         }

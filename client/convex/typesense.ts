@@ -1,5 +1,5 @@
-import Typesense from "typesense";
-import { type MaterialHit } from "../types";
+import Typesense, { type SearchResponse } from "typesense";
+import { type MaterialHit } from "./types";
 
 const typesenseClient = new Typesense.Client({
   nodes: [
@@ -13,7 +13,7 @@ const typesenseClient = new Typesense.Client({
   connectionTimeoutSeconds: 2,
 });
 
-export const textSearch = async(query: string) => {
+export const textSearch = async(query: string): Promise<SearchResponse<MaterialHit>> => {
     try {
         const searchResults = await typesenseClient
             .collections<MaterialHit>("materiale")
@@ -30,7 +30,12 @@ export const textSearch = async(query: string) => {
     }
 };
 
-export const blendSearch = async (query: string) => {    
+/**
+ * Perform a blend search on the 'materiale' collection using both embedding and description.
+ * @param query The search query string.
+ * @returns The search results.
+ */
+export const blendSearch = async (query: string, k: number = 1, distance_threshold: number = 0.8, alpha: number = 0.9): Promise<SearchResponse<MaterialHit>> => {    
     try {
         const searchResults = await typesenseClient
             .collections<MaterialHit>("materiale")
@@ -38,8 +43,8 @@ export const blendSearch = async (query: string) => {
             .search({
                 q: query,
                 query_by: "embedding,descriere",
-                vector_query: `embedding:([], k:1, distance_threshold: 0.8, alpha: 0.9)`,
-                per_page: 1,
+                vector_query: `embedding:([], k: ${k}, distance_threshold: ${distance_threshold}, alpha: ${alpha})`,
+                per_page: k,
                 prefix: false
             });
             
