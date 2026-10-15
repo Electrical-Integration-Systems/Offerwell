@@ -40,7 +40,6 @@ export function MaterialeCards({
             <dl className="flex flex-row gap-3 items-center justify-around border-t border-border pt-4">
                 {([
                 ["Preț achiziție", material.pretAchizitie, "text-danger", "pretAchizitie"],
-                ["Preț vânzare", material.pretVanzare, "text-accent", "pretVanzare"],
                 ["Manoperă", material.manopera, "text-success", "manopera"],
                 ] as const).map(([label, price, color, field]) => (
                 <div key={label} className="min-w-0">

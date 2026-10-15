@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Layers3, Search, Plus, Sparkles, FileSpreadsheet, ChartCandlestick } from "lucide-react";
+import { useState } from "react";
+import ChangePasswordDialog from "../change-password-dialog";
+import { Layers3, Search, Plus, Sparkles, FileSpreadsheet, ChartCandlestick, HelpCircle, BookOpen } from "lucide-react";
 import { Button, Avatar, Tooltip } from "@heroui/react";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 
 export default function Header() {
+    const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
     const user = useQuery(api.auth.currentUser);
     const name = user?.name?.trim();
     const email = user?.email?.trim();
@@ -25,6 +28,7 @@ export default function Header() {
           <nav aria-label="Navigare principală" className="flex flex-wrap items-center gap-7 text-sm">
             <Link href="/preturi" className="flex flex-row gap-2"><ChartCandlestick className="size-4" aria-hidden="true" /></Link>
             <Link href="/" className="flex flex-row gap-2"><Search className="size-4" aria-hidden="true" />Materiale</Link>
+            <Link href="/catalog" className="flex flex-row gap-2"><BookOpen className="size-4" aria-hidden="true" />Catalog</Link>
             <Link href="/adauga-material" className="flex flex-row gap-2"><Plus className="size-4" aria-hidden="true" />Adaugă material</Link>
             <Link href="/oferte" className="flex flex-row gap-2">
               <Button variant="secondary"><FileSpreadsheet className="size-4" aria-hidden="true" />Oferte</Button>
@@ -41,8 +45,12 @@ export default function Header() {
                 <Tooltip.Content>
                     <Tooltip.Arrow />
                     <div className="flex flex-col">
-                        <Link href="/" className="px-4 py-2 hover:bg-secondary border-border rounded-full text-muted">Profil</Link>
-                        <Link href="/" className="px-4 py-2 hover:bg-secondary border-border rounded-full text-muted">Setări</Link>
+                        <Link href="/docs" className="px-4 py-2 font-bold hover:bg-secondary border-border rounded-full flex flex-row items-center gap-2">
+                            Help <HelpCircle className="size-4" aria-hidden="true" />
+                        </Link>
+                        <button className="justify-start px-4 py-2 rounded-full hover:bg-secondary cursor-pointer" onClick={() => setIsPasswordDialogOpen(true)}>
+                            Schimbă parola
+                        </button>
                         <Link href="/deconectare" className="px-4 py-2 hover:bg-secondary border-border rounded-full">
                             Deconectare
                         </Link>
@@ -51,6 +59,7 @@ export default function Header() {
             </Tooltip>
           </nav>
         </div>
+        {isPasswordDialogOpen && <ChangePasswordDialog isOpen onClose={() => setIsPasswordDialogOpen(false)} />}
       </header>
     );
 }

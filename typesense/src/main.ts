@@ -5,6 +5,7 @@ import type { Material } from "./types";
 async function run() {
   if (!process.env.TYPESENSE_API_KEY || !process.env.TYPESENSE_HOST) {
     console.error("Variabilele de mediu Typesense lipsesc.");
+    process.exitCode = 1;
     return;
   }
 
@@ -18,7 +19,8 @@ async function run() {
     await ensureDocuments("materiale", csvData);
 
   } catch (err) {
-    console.error("Error during execution:", err);
+    console.error("Error during execution:", err instanceof Error ? err.message : err);
+    process.exitCode = 1;
   }
 }
 

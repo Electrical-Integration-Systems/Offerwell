@@ -46,7 +46,6 @@ export function MaterialeTable({
           <Table.Header>
                 <Table.Column isRowHeader className="text-left">Descriere</Table.Column>
                 <Table.Column className="text-center">Preț Achiziție</Table.Column>
-                <Table.Column className="text-center">Preț Vânzare</Table.Column>
                 <Table.Column className="text-center">Manoperă</Table.Column>
                 {process.env.NODE_ENV === "development" && (
                   <Table.Column className="text-center">Embedding</Table.Column>
@@ -71,26 +70,6 @@ export function MaterialeTable({
                         onPress={() => handleCopyPrice(material.pretAchizitie, index, "pretAchizitie")}
                       >
                         {copiedField === `${index}-pretAchizitie` ? <Check className="size-3" /> : <Copy className="size-3" />}
-                      </Button>
-                      <Tooltip.Content>
-                        <Tooltip.Arrow />
-                        Copiază preț
-                      </Tooltip.Content>
-                    </Tooltip>
-                  </div>
-                </Table.Cell>
-                <Table.Cell className="text-accent font-semibold">
-                  <div className="flex items-center gap-2 justify-end">
-                    {currency.format(material.pretVanzare)}
-                    <Tooltip delay={0}>
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="secondary"
-                        className="min-w-fit h-fit p-1"
-                        onPress={() => handleCopyPrice(material.pretVanzare, index, "pretVanzare")}
-                      >
-                        {copiedField === `${index}-pretVanzare` ? <Check className="size-3" /> : <Copy className="size-3" />}
                       </Button>
                       <Tooltip.Content>
                         <Tooltip.Arrow />

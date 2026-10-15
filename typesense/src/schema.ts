@@ -3,7 +3,7 @@ import type { CollectionCreateSchema } from "typesense/lib/Typesense/Collections
 const schema: CollectionCreateSchema = {
     name: 'materiale',
     fields: [
-        {name: 'descriere', type: 'string'},
+        {name: 'descriere', type: 'string', sort: true},
         {name: 'pretAchizitie', type: 'float'},
         {name: 'pretVanzare', type: 'float'},
         {name: 'manopera', type: 'float'},

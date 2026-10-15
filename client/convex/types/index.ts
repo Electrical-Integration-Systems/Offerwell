@@ -7,6 +7,7 @@ export type Material = {
 };
 
 export type MaterialExtras = {
+      sheetName?: string;
       rand: number;
       descriere: string;
       cantitate: number;

@@ -1,396 +1,403 @@
-descriere,pretAchizitie,pretVanzare,manopera
-"Corp de iluminat cu LED tip stradal, 70W, IP65, IK08",50.00,62.50,25.00,87
-"Stalp de iluminat metalic din otel zincat , H=8 m, amplasat la 30 m distanță între ei prevazut cu panou fotovoltaic 100W, controller si acumulator cu gel","1,250.00","1,562.50","250.00","86"
-"Piesa de separatie montata in cutie de protectie la 0.5m de sol",20.00,25.00,15.00,87
-"Electrod din OLZn tip cruce 50x50x3mm, l=1.50m montat ingropat la 0.8m adâncime fata de cota terenului, la 3.00m distanta unul de altul",30.00,37.50,20.00,88
-"Platbanda 40x4mm montata la 0.8m adâncime",1.80,2.25,4.00,89
-"Cablu cupru armat tip CYAbY 5x2.5 mmp",1.72,2.15,1.50,91
-"Cablu cupru armat tip CYAbY 3x2.5 mmp",1.07,1.34,1.20,92
-"Cablu cupru  tip CYYF 3x1.5 mmp",0.52,0.65,1.20,93
-"Tub de protectie PVCG 63mm",1.50,1.88,1.00
-"Banda avertizare",0.50,0.63,0.50
-"Etanșări antifoc pentru treceri de cabluri, tuburi de protecție etc.",350.00,437.50,500.00
-"Etichetare și testare cabluri",50.00,62.50,200.00
-"Materiale mărunte",40.00,50.00,50.00
-"Cablu tip CYYF 0.6/1kV 3x1,5mmp",0.52,0.65,1.20
-"Cablu tip CYYF 0.6/1kV 3x2,5mmp",0.90,1.13,1.20
-"Cablu tip NHXH FE180/E90 3x2,5mmp",1.44,1.80,1.20
-"Priză simplă, 230V, 16A, IP54, cu CP, montaj aparent",6.00,7.50,10.00
-"Întrerupător, 230V, 10A,  IP54, montaj aparent",7.00,8.75,10.00
-"Doză de conexiuni cu capac IP20 100x100x50mm",3.00,3.75,5.00
-"Corp de iluminat, cu modul LED 30W, IP65, montat aparent",32.50,40.63,15.00
-"Corp de iluminat, cu modul LED 40W, IP65, montat aparent",35.00,43.75,15.00
-"Corp de iluminat, cu modul LED 20W, IP65, montat aparent",30.00,37.50,12.00
-"Corp de iluminat LED, montat aparent, respectiv suspendat, inscripționat, pentru marcare căi de evacuare, tip permanent, IP42, cu autonomie de minim 1h, montat aparent",29.00,36.25,12.00
-"Platbanda OLZn 40x4mm",1.80,2.25,4.00
-"Platbanda OLZn 25x4mm",1.60,2.00,3.00
-"Conductor din Al de 8 mmp, coborare de la PDA",2.00,2.50,2.00
-"Bara de egalizare potential",40.00,50.00,20.00
-"Piesa de separatie cu eclisa montaj aparent pe perete",20.00,25.00,15.00
-"Sirenă de incendiu adresabilă, de interior, roșie 100dB",55.00,68.75,15.00
-"Sirenă de incendiu de exterior convențională autoalimentata roșie 100dB",65.00,81.25,20.00
-"Modul transponder cu 4 intrari si 2 iesiri",140.00,175.00,30.00
-"Sursa de alimentare 24Vcc/5A echipata cu acumulatori",160.00,200.00,20.00
-"Detector de incendiu multicriterial de temperatură si fum inclus si soclu",23.00,28.75,10.00
-"Cablu incendiu-JEH(St)E30 2X2X0,8mm",0.70,0.88,1.20
-"Cablu JEH(St)E30 2X2X0,8mm pentru sirene",0.70,0.88,1.20
-"Doze de derivație cu proprietăți de întârziere la propagarea focului si fără eliberare de halogen",26.00,32.50,10.00
-"Țeavă metalica, diametrul de 20mm, inclusiv sisteme de prindere si fixare",2.50,3.13,1.00
-"Prinderi rezistente la foc",150.00,187.50,250.00
-"Materiale marunte",50.00,62.50,50.00
-"Cablu tip CYYF 0.6/1kV 3x4mmp",1.32,1.65,1.90
-"Cablu tip CYYF 0.6/1kV 5x2.5mmp",1.50,1.88,1.50
-"Cabluri de comanda Csyy 7x1mmp",1.80,2.25,1.50
-"Priză dublă, 230V, 16A, IP20, cu CP, montaj aparent",9.00,11.25,10.00
-"Întrerupător, 230V, 10A,  IP20, montaj aparent",7.00,8.75,10.00
-"Comutator cap de scară, 230V, 10A, IP20, montaj aparent",7.00,8.75,10.00
-"Senzor de mișcare 1NO, 10A 230V, IP20",35.00,43.75,15.00
-"Buton cu revenire comandă iluminat montaj îngropat, la 0,9 m de pardoseală",23.00,28.75,10.00
-"Cablu cupru armat tip CYAbY 5x6 mmp",3.50,4.38,1.50
-"Cablu cupru tip CYYF 3x2.5 mmp in stalp",0.90,1.13,1.20
-"Tub de protectie PVCØ110",2.00,2.50,1.50
-"Tub de protectie PVCØ63",1.50,1.88,1.00
-"Tub de protectie PVCØ40",1.00,1.25,1.00
-"Banda avertizare.",0.50,0.63,0.50
-"Cablu FTP Cat 6, halogen free",0.50,0.63,1.20
-"Tub PVC cu diametrul de 16 mm, fara halogen pentru coborari",0.60,0.75,0.80
-"Acumulator 12V/7Ah",25.00,31.25,5.00
-"Cablu TV coaxial RG6",0.60,0.75,1.20
-"Rack 24U, 19"", 600 x 600 mm, echipat cu unitate cu 2 ventilatoare, kit de impamantare, unitate cu 6 prize schuko  ",82.83,103.54,17.75
-"Rack 9U, 19"", 600 x 600 mm, echipat cu unitate cu 2 ventilatoare, kit de impamantare, unitate cu 6 prize schuko  ",16.17,20.21,4.93
-"Switch 24 porturi, 1 port GB cu 1 port SFP",49.30,61.63,4.93
-"Switch 8 porturi cu PoE, 1 port GB cu 1 port SFP",19.72,24.65,2.37
-Acces Point,35.50,44.37,3.55
-UPS 1kVA + acumulator inclus,39.44,49.30,6.90
-Amplificator de linie 30dB,9.86,12.33,3.94
-Camera video IP de exterior AIO 5MP cu IR 60m,28.60,35.75,3.55
-Camera video IP de interior DOME 4MP cu IR 30m,24.65,30.82,2.56
-Inregistrator video de retea  NVR 16 canale,25.64,32.05,2.96
-Hard disk 4 TB,14.79,18.49,0.99
-"Switch 24 porturi RJ45, cu PoE pe toate porturile, montabil in rack 19""",44.37,55.47,3.94
-"Monitor color 27"" LCD",39.44,49.30,3.94
-UPS 3kVA + acumulator inclus,69.03,86.28,11.83
-"Rack 24U, 19"", 800 x 800 mm, echipat cu unitate cu 4 ventilatoare, kit de impamantare, unitate cu 6 prize schuko  ",82.83,103.54,17.75
-Sursa de alimentare 5A ,5.92,7.40,4.93
-Cititor de proximitate ,5.52,6.90,2.96
-Yala electromagnetica,8.87,11.09,5.92
-Programator carduri,49.30,61.63,3.94
-Lampa semnalizare,4.34,5.42,2.96
-Cablu din cupru tip N2XH 3x1.5 mmp ,0.14,0.18,0.24
-Cablu din cupru tip N2XH 3x2.5 mmp ,0.21,0.26,0.24
-Cablu din cupru tip N2XH 4x1.5mmp,0.24,0.31,0.24
-Cablu din cupru tip N2XH 5x2.5mmp,0.44,0.55,0.30
-Cablu din cupru tip N2XH 5x4mmp,0.50,0.62,0.30
-Cablu din cupru tip N2XH 5x6mmp,0.71,0.88,0.30
-Cablu din cupru tip N2XH 5x10mmp,1.16,1.46,0.39
-Cablu din cupru tip N2XH 5x25mmp,3.33,4.16,0.49
-Cablu din cupru tip N2XH 3x240+120mmp,17.93,20.61,3.94
-Cablu din cupru tip NHXH E90 5x6mmp,1.29,1.61,0.30
-Cablu din cupru tip NHXH E90 5x16mmp,2.89,3.61,0.49
-Cablu din cupru tip NHXH E90 3x1.5mmp,0.24,0.31,0.24
-Cablu din cupru tip NHXH E90 3x2.5mmp,0.28,0.35,0.24
-"Intrerupator simplu 10A/230V, montaj ingropat IP20",1.18,1.48,1.97
-"Intrerupator dublu 10A/230V, montaj ingropat IP20",1.77,2.22,1.97
-"Intrerupator cap scara 10A/230V, montaj ingropat IP20",1.38,1.73,1.97
-"Intrerupator simplu 10A/230V, montaj aparent IP44",1.38,1.73,1.97
-"Intrerupator cap scara 10A/230V, montaj aparent IP44",1.58,1.97,1.97
-"Intrerupator cu revenire 10A/230V, montaj ingropat IP20",1.38,1.73,1.97
-"Priza simpla 2P+PE 16A/230V, cu protectie ,montaj ingropat IP 20",1.18,1.48,1.97
-"Priza dubla 2P+PE 16A/230V, cu protectie ,montaj ingropat IP 20",1.77,2.22,1.97
-"Priza simpla 2P+PE 16A/230V, cu protectie ,montaj aparent IP44",1.18,1.48,1.97
-"Priza dubla 2P+PE 16A/230V, cu protectie ,montaj aparent IP44",1.77,2.22,1.97
-"Priza trifazata 3P+N 16A/400V, montaj aparent",2.96,3.70,1.97
-Priza modulara pentru montaj in doza de pardoseala 230Vca,0.89,1.11,1.58
-Doza de pardoseala 12 aparate (24 module) montaj in sapa,26.23,32.79,3.94
-Senzor de miscare 12m de tavan (360 gr),6.90,8.63,2.96
-"Doza derivatie diferite dimensiune, montate aparent ",0.59,0.74,0.99
-Conexiuni in doze de derivatie,0.00,0.00,0.20
-Adaptor paratraznet + piesa prindere exterior platbanda,128.19,160.24,25.64
-Colier cu strangere 40-60 pt. prindere platbanda pe catarg,0.20,0.25,0.30
-Con pentru protectie patrundere apa,21.69,27.12,4.93
-Suport platbanda/conductor pe acoperis,0.39,0.49,0.39
-Montare platbanda OLZn 40x4 mm ,0.35,0.44,0.79
-Montare platbanda OLZn 25x4 mm,0.32,0.39,0.59
-"Conductor rotund din OLZn, D=10mm",0.43,0.54,0.39
-Electrod impamantare din teava zincata 2 1/2 - 2m,5.92,7.40,3.94
-Bara egalizare potential,2.96,3.70,3.94
-Piese de separatie,3.35,4.19,2.96
-Imbinarea prizei de legare la pamant cu suruburi galvanizate M12x40,0.20,0.25,0.59
-Montat conductor MYF 1x16mmp,0.35,0.44,0.24
-Verificarea prizei de pamant,0.00,0.00,118.33
-Materiale marunte de montaj,19.72,24.65,19.72
-"Sapatura in teren - 0,8 m adincime / 0,3 m latime",0.00,0.00,0.00
-"Tub de protectie din PVC, LZOH, coturi, mufe, cleme D=16mm",0.10,0.12,0.16
-"Tub de protectie din PVC, LZOH, coturi, mufe, cleme D=20mm",0.12,0.15,0.16
-"Tub de protectie din PVC, LZOH, coturi, mufe, cleme D=25mm",0.14,0.17,0.20
-"Tub de protectie din PVC, LZOH, coturi, mufe, cleme D=32mm",0.18,0.22,0.20
-Tub de protectie HDPE D=90mm,0.30,0.37,0.24
-"Pat de cablu metalic 60x100, coturi , t-uri materiale de montaj ",1.18,1.48,0.99
-"Pat de cablu metalic 60x200, coturi , t-uri materiale de montaj ",1.48,1.85,1.18
-"Pat de cablu metalic 60x300, coturi , t-uri materiale de montaj ",1.77,2.22,1.38
-Corp de iluminat tip aplica de tavan cu sursa LED de 20W/ IP44/240V/ 50Hz/ 4000K/ montat aparent,5.92,7.40,2.37
-Corp de iluminat tip aplica de tavan cu sursa LED de 20W/ IP44/240V/ 50Hz/ 4000K/ cu senzor de miscare inclus montat aparent,9.86,12.33,3.55
-Corp de iluminat tip aplica de tavan cu sursa LED de 30W/ IP20/240V/ 50Hz/ 4000K/ montat aparent,6.90,8.63,2.37
-Corp de iluminat tip aplica de perete echipat cu sursa LED de 20W/ IP65/240V/ 50Hz/ 4000K/ montat aparent,5.92,7.40,2.37
-Corp de iluminat tip aplica de perete echipat cu sursa LED de 2x10W/ IP65/240V/ 50Hz/ 4000K/ montat aparent,6.71,8.38,2.37
-Corp de iluminat tip aplica de perete cu sursa LED de 15W/ IP44/240V/ 50Hz/ 4000K/ montat aparent,4.93,6.16,2.37
-Corp de iluminat 600x600 cu sursa LED de 40W/ IP20/240V/ 50Hz/ 4000K/ montat aparent,5.92,7.40,2.37
-Corp de iluminat echipat cu sursa LED de 40W/ IP20/240V/ 50Hz/ 4000K/ montat aparent,6.90,8.63,2.37
-Corp de iluminat echipat cu sursa LED de 20W/ IP20/240V/ 50Hz/ 4000K/ montat aparent,5.92,7.40,2.37
-Corp de iluminat echipat cu sursa LED de 40W/ IP65/240V/ 50Hz/ 4000K/ montat aparent,8.28,10.35,2.37
-Corp de iluminat echipat cu sursa LED de 20W/ IP65/240V/ 50Hz/ 4000K/ montat aparent,6.90,8.63,2.37
-"Corp de iluminat echipat cu sursa LED 40W etans IP65, montaj aparent + kit de emergenta pentru 3 ore",15.78,19.72,3.55
-"Corp de iluminat de siguranta de evacuare LED -3W, montat aparent, cu functionare in permanenta, cu acumulator, autonomie 3h, IP65, inclusiv accesorii (EXIT)",5.92,7.40,1.97
-"Corp de iluminat de siguranta pentru marcarea hidrantilor LED -3W, montat aparent, cu functionare in permanenta, cu acumulator, autonomie 3h, inclusiv accesorii",5.92,7.40,1.97
-"Corp de iluminat de siguranta impotriva panicii LED -3W, montat aparent, cu functionare nepermanenta, cu acumulator, autonomie 3h, IP20, inclusiv accesorii",5.92,7.40,1.97
-"Dispozitiv de comutare automata, integrat in aparatul de iluminat, face trecerea de pe alimentarea principala pe cea de siguranta (Kit de emergență autonomie 3h pentru aparat de iluminat, incluzând baterie locală autonomie 3h)",7.89,9.86,1.97
-"Corp de iluminat de siguranta pentru marcarea declansatoarelor manuale LED -3W, montat aparent, cu functionare in permanenta, cu acumulator, autonomie 3h, inclusiv accesorii",5.92,7.40,1.97
-Conexiuni corpuri de iluminat,0.00,0.00,0.39
-Cablu CSYY 7x2.5mmp,0.49,0.61,0.39
-Probe si verificari grup electrogen,0.00,0.00,59.17
-Verificare priza de pamant,0.00,0.00,39.44
-Transport rutier grup electrogen,0.00,0.00,98.61
-"Racordarea cu papcui a conductoarelor de cupru cu sectiuni de 16, 25, 35mm",0.99,1.23,4.93
-Diblu metalic cu diametru nominal de 6 sau 8mm,0.01,0.01,0.02
-Doze de legatura si conexiuni,0.49,0.62,0.79
-Doze centralizatoare din plastic ignifug 200x100x100,3.16,3.94,1.97
-Cap terminal interior legat la borne < 2x10mmp,0.20,0.25,0.99
-Cap terminal interior legat la borne < 4x10mmp,0.30,0.37,0.99
-Presetupe pentru etansarea cablurilor din exterior,21.69,27.12,3.94
-Etichete pentru cabluri ,2.96,3.70,4.93
-"Cleme rezistente la foc 90 min , inclusiv accesorii de montaj",0.24,0.30,0.24
-"Izolatie rezistenta la foc F90 pentru  trecerea cablurilor  prin pereti si plafoane, complet cu toate accesoriile necesare pentru diametre de pana la 150mm.  ",1.97,2.47,2.37
-Cablu din cupru tip N2XH 3x240+120+120mmp,17.93,20.61,3.94
-Presetupe pentru etansarea cablurilor din exterior,21.69,27.12,3.94
-"Țeavă PVC-KG, diametru exterior 160, hm=-0,9 fata de CTA",0.87,1.08,0.39
-"Detector optic de fum; interactiv; conține izolator la scurtcircuit; indicator optic de stare LED (normală, alarmă sau detectare defect); sistem de securizare în soclu; soclu inclus",4.73,5.92,2.96
-"Detector combinat de fum si temperatura; interactiv; conține izolator la scurtcircuit; indicator optic de stare LED (normală, alarmă sau detectare defect); sistem de securizare în soclu; soclu inclus",5.52,6.90,2.96
-"Indicator optic, 24Vcc, conventional",0.99,1.23,0.99
-Buton de incendiu analog adresabil; cu izolator,6.90,8.63,2.37
-Sirena de interior adresabila; Montaj pe perete,10.85,13.56,2.96
-Sirena de exterior cu flash; Alimentare: 24 V/ 2.5 Ah; acumulatori inclusi,11.83,14.79,3.94
-"Modul adresabil 8 intrari / 8 iesiri programabile, montat in carcasa",34.51,43.14,7.89
-"Motor deschidere trapa de fum, alim.24Vcc",88.75,110.94,15.78
-"Sursa de alimentare, 5A, 2 acum. 2x18Ah/12V inclusi",34.51,43.14,4.93
-"Cablu rezistent la foc 30 de minute JE-H(St)H E30 2x2x0,8mm",0.12,0.15,0.24
-Cablu alimentare NHXH E30 3x1.5,0.24,0.31,0.24
-Cablu alimentare NHXH E30 4x2.5,0.35,0.44,0.24
-"Tub PVC Dn=20mm, cleme si prinderi incluse (cleme rezistente la foc si omologate)",0.18,0.22,0.28
-Executat treceri prin pereti si plafoane pana la diametre D=102mm,0.00,0.00,1.97
-Izolatie rezistenta la foc pentru cablu individual la trecerea prin pereti usori,1.97,2.47,2.37
-"Izolatie rezistenta la foc pentru trecerea cablurilor prin pereti si plafoane, complet cu toate accesoriile necesare pentru diametre de pana la 150mm",2.37,2.96,2.96
-Diblu metalic cu diametrul nominal 6 sau 8 mm ,0.01,0.01,0.02
-"Placa suplimentare 1 bucla cu 128 de elemente ,compatibila cu sistemul de detectie incendiu achizitionat ,complet echipata.",49.30,61.63,19.72
-"Material marunt (clipsuri, dibluri, holsuruburi, bride, fludor, conectori, etc)",39.44,49.30,39.44
-Etichete și inscripționări,11.83,14.79,69.03
-"Cleme rezistente la foc 30 minute ,inclusiv elemente de prindere si montaj",0.06,0.07,0.08
-"Detector liniar de temperatura cu fir senzitiv,complet echipat",128.19,160.24,11.83
-Fir senzitiv,0.35,0.44,0.24
-Modul integrare in bucla detector liniar de temperatura,27.61,34.51,5.92
-"Priza simpla RJ45, montata ingropat, complet echipata",1.58,1.97,1.97
-"Patch panel 24 de porturi RJ45 Cat.6, complet echipat ",7.89,9.86,11.83
-Patch panel fibra optica echipat cu 12 adaptori LC Duplex Multimode pentru 24 fibre 1U 19 inch negru,9.86,12.33,7.89
-Oraganizatoare orizontale,1.58,1.97,0.99
-Cablu UTP cat.6,0.09,0.11,0.24
-"Patch cord UTP cat.6, 1m",0.20,0.25,0.20
-Cablu N2XH 3x2.5 mm,0.21,0.26,0.24
-Cablu fibra optica MM OM3 4x50/125,0.20,0.25,0.24
-"Firida de bransament pentru exteriori echipata cu o regleta de 10 perechi cu protectie, caseta 12 suduri",13.02,16.27,3.94
-"Tub izolant de protectie LZOH, etans IPEY 20 , inclusiv coturi si mufe  - materiale si montaj",0.12,0.15,0.16
-Etichete cabluri,0.14,0.17,0.20
-Etichete la prize si patch panel-uri,0.14,0.17,0.20
-Dibluri si holtzsuruburi 6 mm,0.01,0.01,0.02
-Executat slit in perete pentru pozare TUB IPEY,0.30,0.37,0.59
-Executat treceri prin pereti si plafoane pana la diametre  D= 52mm,0.39,0.49,1.97
-"Izolatie rezistenta la foc F90 pentru  trecerea cablurilor  prin pereti si plafoane, complet cu toate accesoriile necesare pentru diametre de pana la 150mm.  ",2.37,2.96,2.96
-Etansare la umezeala a cablurilor prin gol in perete de beton prin piesa de etansare tip Presetupa,21.69,27.12,5.92
-"Priza simpla RJ45, montata in doza de pardoseala, complet echipata",1.58,1.97,1.58
-"Priza TV, montaj ingropat, 1dB",2.96,3.70,1.97
-"Splitter interior 5 CAI , 1IN/4OUT",4.93,6.16,4.93
-"Tap interior 2 CAI , 1IN/2OUT",2.96,3.70,1.97
-"Mufa ""F"" pentru splitter",0.20,0.25,0.39
-"Montare doze de aparat priza , montaj ingropat",0.20,0.25,0.39
-Cutie metalica ,2.96,3.70,0.99
-"Doze de ramificatie, montaj ingropat",0.69,0.86,0.99
-Cablu coaxial RG6,0.14,0.17,0.24
-Cablu N2XH 3x2.5 mm,0.21,0.26,0.24
-"Tub izolant de protectie LZOH, etans IPEY 20 , inclusiv coturi si mufe  - materiale si montaj",0.12,0.15,0.16
-Etichete si inscriptionari cabluri,0.20,0.25,0.20
-Diblu si holtzsuruburi metalic cu diametrul nominal 6 sau 8 mm ,0.01,0.01,0.02
-"Patch panel 24 de porturi RJ45 Cat.6, complet echipat ",7.89,9.86,3.94
-"Patch cord UTP cat.6, 2 m ",0.20,0.25,0.20
-Cablu UTP Cat.6 ,0.12,0.15,0.24
-Cablu VGA de 5m,1.08,1.36,0.24
-Cablu N2XH 3x2.5 mm,0.21,0.26,0.24
-"Tub izolant de protectie LZOH, etans IPEY 20 , inclusiv coturi si mufe  - materiale si montaj",0.12,0.15,0.16
-Tub copex D=16mm,0.08,0.10,0.16
-Doze de conexiuni 150x150,0.69,0.86,0.99
-Dibluri si holtzsuruburi 6 mm,0.01,0.01,0.02
-Conectori RJ45,0.10,0.12,0.39
-Etichete pentru cabluri UTP Cat.6,0.20,0.25,0.20
-Eticehte pentru patch panel,0.20,0.25,0.20
-Executat treceri prin pereti si plafoane pana la diametre  D= 52mm,0.39,0.49,1.97
-"Izolatie rezistenta la foc F90 pentru  trecerea cablurilor  prin pereti si plafoane, complet cu toate accesoriile necesare pentru diametre de pana la 150mm.  ",2.37,2.96,2.96
-Buton de iesire ,2.96,3.70,2.37
-Buton de urgenta,3.55,4.44,2.37
-Contact magnetic,0.39,0.49,1.58
-Cartele de acces,0.10,0.12,0.10
-Cablu LiYCY 6x0.75,0.19,0.23,0.24
-Cablu LiYCY 4x0.75,0.13,0.16,0.24
-Cablu LiYCY 2x0.25,0.07,0.09,0.24
-Cablu FTP Cat.6 ,0.12,0.15,0.24
-Cablu N2XH 3x2.5 mm,0.21,0.26,0.24
-"Tub izolant de protectie LZOH, etans IPEY 20 , inclusiv coturi si mufe  - materiale si montaj",0.12,0.15,0.16
-Doze de conexiuni 150x150,0.69,0.86,0.99
-Dibluri si holtzsuruburi 6 mm,0.01,0.01,0.02
-Etichete cabluri ,0.20,0.25,0.20
-"Izolatie rezistenta la foc F90 pentru  trecerea cablurilor  prin pereti si plafoane, complet cu toate accesoriile necesare pentru diametre de pana la 150mm.  ",2.37,2.96,2.37
-"Cablu electric JE-H(St)H 2x2x0,8mmp",0.14,0.17,0.24
-Cablu electric N2XH 2x1.5mmp,0.14,0.17,0.24
-"Tub izolant de protectie LZOH, etans IPEY 20 , inclusiv coturi si mufe  - materiale si montaj",0.12,0.15,0.16
-Doze de conexiuni 150x150,0.69,0.86,0.99
-Dibluri si holtzsuruburi D=6 sau 8mm,0.01,0.01,0.02
-Etichete cabluri ,1.97,2.47,3.94
-"Izolatie rezistenta la foc F90 pentru  trecerea cablurilor  prin pereti si plafoane, complet cu toate accesoriile necesare pentru diametre de pana la 150mm.  ",2.37,2.96,2.96
-Cablu N2XH 3x2.5mm2,0.18,0.22,0.24
-Cablu N2XH 3x0.75mm2,0.12,0.15,0.24
-Cablu N2XH 2x0.75mm2,0.10,0.12,0.24
-Cablu N2XH 2x0.5mm2,0.09,0.11,0.24
-Cablu SFTP 8x0.22mm2,0.11,0.14,0.24
-Cablu SFTP cat 6a,0.12,0.15,0.24
-Cablu comuncatie RS485,0.10,0.12,0.24
-Cablu comunicatie JH(ST)H-2x2x0.8 -modbus,0.12,0.15,0.24
-Cablu N2XH 3x4mm2,0.30,0.37,0.30
-Senzor de temperatura interioara ,49.30,61.63,3.94
-Senzor de temperatura exterioara,49.30,61.63,3.94
-Senzor inundatie digital,35.50,44.37,3.94
-"Țeavă de protecție din PVC HF, flexibilă sau rigidă, montată în elementele de construcție, sub tencuiala pereților, în pereți prefabricați, sau sub planșeu, inclusiv lucrările de zidărie și accesorii precum si cutiile de conectare diametru 16mm",0.09,0.11,0.16
-"Cablu pentru energie electrica, montat liber prin asezare (fara dispozitive de fixare) cablul avand conducte cu sectiunea de ... pana la 16 mmp, montat pe fundul canalelor",1.32,1.65,1.50
-"Cablu pentru energie electrica, montat liber prin asezare (fara dispozitive de fixare) cablul avand conducte cu sectiunea de ... pana la 16 mmp, montat pe fundul canalelor",2.96,3.70,1.50
-"Cablu pentru energie electrica, montat liber prin asezare (fara dispozitive de fixare) cablul avand conducte cu sectiunea de ... pana la 16 mmp, montat pe fundul canalelor",0.80,1.00,1.50
-"Cablu pentru energie electrica, montat liber prin asezare (fara dispozitive de fixare) cablul avand conducte cu sectiunea de ... pana la 16 mmp, montat pe fundul canalelor",0.70,0.88,1.50
-"Tub izolant IP, din policlorura de vinil neplastifiata, IPY, montat îngropat sau aparent, având diametrul exterior de ... 13 mm, montat îngropat",0.50,0.63,0.80
-"Grup electrogen 25KVA, inclusiv AAR-GE, Disjunctor si carcasa pentru montaj in exterior.",6000.00,7500.00,0.00
-SISTEM FOTOVOLTAIC COMPLET ECHIPAT 79.2KW,27800.00,34750.00,0.00
-Centrala alarmare la efractie si control acces cu acumulatori,400.00,500.00,0.00
-Modul extensie efractie,50.00,62.50,0.00
-Tastatura armare/dezarmare,110.00,137.50,0.00
-Detector PIR,40.00,50.00,0.00
-Sirena de efractie de interior,20.00,25.00,0.00
-Sirena de efractie de exterior cu lampa flash,60.00,75.00,0.00
-Modul control acces,50.00,62.50,0.00
-Cititor de proximitate,25.00,31.25,0.00
-Buton deschidere usa,15.00,18.75,0.00
-Buton de deschidere in caz de urgenta,15.00,18.75,0.00
-"Dispozitiv electromagnetic blocare usa, cu suport fixare si accesorii prindere incluse",40.00,50.00,0.00
-Amortizor usa hidraulic,20.00,25.00,0.00
-Cartela de proximitate,1.00,1.25,0.00
-Statie managment de control acces cu software de control acces si efractie,2000.00,2500.00,0.00
-Network video recorder 64 canale vdeo si audio,2350.00,2937.50,0.00
-"Monitor video 55""",415.00,518.75,0.00
-"Switch 24 port, POE",400.00,500.00,0.00
-Patch pannel 24 port,110.00,137.50,0.00
-"Camera video de interior/exterior cu microfon incorporat, tip IP",150.00,187.50,0.00
-"Rack 22U, echipat cu powerbar(2×7 prize 230Vca) si ventilatoare cu termostat, kit impamantare",700.00,875.00,0.00
-UPS 2200 VA,600.00,750.00,0.00
-Tablou BMS - TBMS_P,0.00,0.00,0.00
-Dispecerat BMS,2500.00,3125.00,0.00
-Senzori temperatura,120.00,150.00,0.00
-Modul comunicatie Generator Diesel,1000.00,1250.00,0.00
-"Corp de iluminat, montat pe dibluri (bolturi) metalice",40.00,50.00,12.00
-"Corp de iluminat, montat pe dibluri (bolturi) metalice",50.00,62.50,12.00
-"Corp de iluminat, montat pe dibluri (bolturi) metalice",30.00,37.50,15.00
-"Corp de iluminat, montat pe dibluri (bolturi) metalice",200.00,250.00,20.00
-"Corp de iluminat, montat pe dibluri (bolturi) metalice",35.00,43.75,12.00
-"Corp de iluminat, montat pe dibluri (bolturi) metalice",30.00,37.50,12.00
-"Corpuri de iluminat speciale ... monobloc pentru iluminatul de siguranta la întreruperea curentului din retea, complet cu accesorii si becuri, cu baterie semiuscata, montat pe dibluri (bolturi) metalice ILUMINAT SIGURANTA",30.00,37.50,10.00
-"Corp de iluminat, montat pe dibluri (bolturi) metalice",30.00,37.50,10.00
-"Corp de iluminat, montat pe dibluri (bolturi) metalice",40.00,50.00,12.00
-"Corp de iluminat, montat pe dibluri (bolturi) metalice",30.00,37.50,12.00
-Incercarea cablurilor de energie electrica ... de maximum 1 kV,0.00,0.00,15.00
-"Intreruptor manual ... unipolar, constructie normala sau impermeabila(flans), montat îngropat",11.00,13.75,10.00
-"Intreruptor manual ... unipolar, constructie normala sau impermeabila (flans), montat îngropat",7.00,8.75,10.00
-"Intreruptor manual ... unipolar, constructie normala sau impermeabila (flans), montat îngropat",7.00,8.75,10.00
-"Intreruptor manual ... unipolar, constructie normala sau impermeabila (flans), montat îngropat",9.00,11.25,10.00
-"Buton de actionare si comanda pentru actionarea automatului de scara sau pentru sonerie, simplu sau cu loc de carte de vizita, montat îngropat",7.00,8.75,10.00
-"Intreruptor manual ... unipolar, constructie normala sau impermeabila (flans), montat îngropat",35.00,43.75,15.00
-"Priza ... bipolara, simpla sau dubla, constructie normala sau constructie impermeabila (flans), cu sau fara contact de protectie (nul), montata îngropat",15.00,18.75,10.00
-"Priza ... bipolara, simpla sau dubla, constructie normala sau constructie impermeabila (flans), cu sau fara contact de protectie (nul), montata îngropat",9.00,11.25,10.00
-"Doza de derivatie, pentru cabluri sau tevi de instalatii, montata ... în mediu normal, tip NBU-PG 21",3.00,3.75,10.00
-"Doza de derivatie, pentru cabluri sau tevi de instalatii, montata ... în mediunormal, tip NBU-PG 21",3.00,3.75,10.00
-"Cablu pentru energie electrica, montat cu scoabe (cleme de prindere) pe console sau pe pod de cabluri, cablul având conducte cu sectiunea ... pîna la 10 mmp, montat pe console fixate cu dibluri (bolturi) metalice",0.89,1.11,1.50
-"Cablu pentru energie electrica, montat cu scoabe (cleme de prindere) pe console sau pe pod de cabluri, cablul având conducte cu sectiunea ... pîna la 10 mmp, montat pe console fixate cu dibluri (bolturi) metalice",0.89,1.11,1.50
-"Cablu pentru energie electrica, montat cu scoabe (cleme de prindere) pe console sau pe pod de cabluri, cablul având conducte cu sectiunea ... pîna la 10 mmp, montat pe console fixate cu dibluri (bolturi) metalice",1.32,1.65,1.50
-"Cablu pentru energie electrica, montat cu scoabe (cleme de prindere) pe console sau pe pod de cabluri, cablul având conducte cu sectiunea pîna la 10 mmp, montat pe console fixate cu dibluri (bolturi) metalice",2.10,2.63,1.50
-"Cablu pentru energie electrica, montat cu scoabe (cleme de prindere) pe console sau pe pod de cabluri, cablul având conducte cu sectiunea ... pîna la 10 mmp, montat pe console fixate cu dibluri (bolturi) metalice",1.07,1.34,1.50
-"Cablu pentru energie electrica, montat cu scoabe (cleme de prindere) pe console sau pe pod de cabluri, cablul având conducte cu sectiunea ... pîna la 10 mmp, montat pe console fixate cu dibluri (bolturi) metalice",1.57,1.96,1.50
-"Cablu pentru energie electrica, montat cu scoabe (cleme de prindere) pe console sau pe pod de cabluri, cablul având conducte cu sectiunea ... pîna la 10 mmp, montat pe console fixate cu dibluri (bolturi) metalice",2.55,3.19,1.50
-"Cablu pentru energie electrica, montat cu scoabe (cleme de prindere) pe console sau pe pod de cabluri, cablul având conducte cu sectiunea ... pîna la 10 mmp, montat pe console fixate cu dibluri (bolturi) metalice",4.01,5.01,1.50
-"Cablu pentru energie electrica, montat cu scoabe (cleme de prindere) pe console sau pe pod de cabluri, cablul având conducte cu sectiunea ... pîna la 10 mmp, montat pe console fixate cu dibluri (bolturi) metalice",5.50,6.88,1.50
-"Cablu pentru energie electrica, montat cu scoabe (cleme de prindere) pe console sau pe pod de cabluri, cablul având conducte cu sectiunea ... pîna la 10 mmp, montat pe console fixate cu dibluri (bolturi) metalice",26.08,32.60,6.00
-"Cablu pentru energie electrica, montat cu scoabe (cleme de prindere) pe console sau pe pod de cabluri, cablul având conducte cu sectiunea ... pîna la 10 mmp, montat pe console fixate cu dibluri (bolturi) metalice",4.53,5.66,1.50
-"Cablu pentru energie electrica, montat cu scoabe (cleme de prindere) pe console sau pe pod de cabluri, cablul având conducte cu sectiunea ... pîna la 10 mmp, montat pe console fixate cu dibluri (bolturi) metalice",18.77,23.46,5.00
-"Cablu pentru energie electrica, montat cu scoabe (cleme de prindere) pe console sau pe pod de cabluri, cablul având conducte cu sectiunea ... pîna la 10 mmp, montat pe console fixate cu dibluri (bolturi) metalice",11.90,14.88,2.50
-"Cablu pentru energie electrica, montat cu scoabe (cleme de prindere) pe console sau pe pod de cabluri, cablul având conducte cu sectiunea ... pîna la 10 mmp, montat pe console fixate cu dibluri (bolturi) metalice",26.08,32.60,6.00
-"Cablu pentru energie electrica, montat cu scoabe (cleme de prindere) pe console sau pe pod de cabluri, cablul având conducte cu sectiunea ... pîna la 10 mmp, montat pe console fixate cu dibluri (bolturi) metalice",126.38,157.98,25.00
-"Numere si etichete, pentru bransamente, coloane electrice, circuite telefonice sau cabluri electrice numere pentru bransamente sau coloane electrice",0.20,0.25,0.50
-"Încercarea cablurilor de energie electrica, de maximum 1 kV",0.00,0.00,15.00
-Montaj pat cabluri,16.00,20.00,8.00
-Montaj pat cabluri,10.00,12.50,6.00
-"Tub izolant IP, din policlorura de vinil neplastifiata, IPY, montat îngropat sau aparent, având diametrul exterior de ... 13 mm, montat îngropat",0.50,0.63,0.80
-"Tub izolant IP, din policlorura de vinil neplastifiata, IPY, montat îngropat sau aparent, având diametrul exterior de ... 25 mm, montat îngropat",0.80,1.00,1.00
-"Cleme metalice REZISTENTE LA FOC E90, pentru trasee cabluri RF montate aparent, inclusiv diblu si holsurub RF",1.00,1.25,1.00
-"Tub gofrat PEHD 450N, De=50mm",1.20,1.50,1.50
-"Tub gofrat PEHD 450N, De=75mm",1.50,1.88,1.70
-Etansarea trecerilor de cabluri prin golurile din ziduri sau în canale,20.00,25.00,35.00
-Matarea ... golurilor dupa instalatii sau consolidari in pereti cu mortar de ciment-var,135.00,168.75,98.00
-"Tablou electric, format panou, dulap, celula sau pupitru, având greutatea ... peste 500 kg.",3929.8","4,912.33",736.85
-"Tablou electric, format panou, dulap, celula sau pupitru, având greutatea ... peste 500 kg.",2163.8,2704.75,405.71
-"Tablou electric, format panou, dulap, celula sau pupitru, având greutatea ... peste 500 kg.",4338.75,5423.45,813.52
-"Conducta de otel, pentru legarea la pamînt sau la nul, a receptoarelor sau aparatelor electrice, montata pe zid de caramida sau beton, conducta fiind banda de otel, laminate la cald, de 25×4 mm",1.80,2.25,4.00
-"Conducta de otel, pentru legarea la pamînt sau la nul, a receptoarelor sau aparatelor electrice, montata pe zid de caramida sau beton, conducta fiind ... banda de otel, laminate la cald, de 40x4 mm",2.00,2.50,5.00
-"Cutie cu eclisa de legatura, ... pentru centura de împamîntare",30.00,37.50,12.00
-"Bara egalizar potential cu suport metalic, si capac polistiren, regleta alama, conecatare pana la 7 conducotri 25mmp si 1 platbanda pana la 30mm, 100 kA",25.00,31.25,25.00
-Electrod din teava de otel de doi toli si jumatatepentru legarea la pamant in teren ... foarte tare,40.00,50.00,25.00
-Verificarea prizelor de pamant pentru lucrari de instalatii electrice la ... constructii,0.00,0.00,500.00
-Dispozitiv amorsare pentru protectie la supratensiuni atmosferice - PDA avand timpul de amorsare AT=60us,1800.00,2250.00,350.00
-"Conducta de otel, pentru legarea la pamînt sau la nul, a receptoarelor sau aparatelor electrice, montata pe zid de caramida sau beton, conducta fiind banda de otel, laminate la cald, de 25×4 mm",1.80,2.25,4.00
-Suport nylon pt cond. Ø 6-11 mm- 30×2mm - pentru montaj pereti sandwich tip hala,6.00,7.50,2.00
-"Protectie pentru conducta de coborîre, pe lungime de 1,80 m,executata din otel cornier cu aripi egale, având dimensiunile 40 X 40 X 4 mm",7.00,8.75,2.00
-"Cutie cu eclisa de legatura, ... pentru centura de împamîntare",30.00,37.50,12.00
-Instalarea cablurilor de telecomunicatii ... in cladire in tub existent:,600.00,750.00,1500.00
-"Tub izolant IP, din policlorura de vinil neplastifiata, IPY, montat îngropat sau aparent, având diametrul exterior de ... 13 mm, montat îngropat",0.50,0.63,0.80
-"Sursa alimentare 12V, 2Ah cu acumulatori",200.00,250.00,20.00
-Instalarea cablurilor de telecomunicatii ... in cladire in tub existent:,800.00,1000.00,1500.00
-"Tub izolant IP, din policlorura de vinil neplastifiata, IPY, montat îngropat sau aparent, având diametrul exterior de ... 13 mm, montat îngropat",0.50,0.63,0.80
-"Doze de derivatie sau ramificaie p.cabluri,cond.elec.,mont.ingr.apar.pe dibluri/console, mediu normal",26.00,32.50,10.00
-"Cablu pentru energie electrica, montat cu scoabe (cleme de prindere) pe console sau pe pod de cabluri, cablul având conducte cu sectiunea ... pîna la 10 mmp, montat pe console fixate cu dibluri (bolturi) metalice",0.89,1.11,1.50
-Instalarea cablurilor de telecomunicatii ... in cladire in tub existent:,0.60,0.75,1.50
-"Tub izolant IP, din policiorura de vinil neplastifiata, IPY, montat îngropat sau aparent, având diametrul exterior de ... 13 mm, montat îngropat",0.50,0.63,0.80
-Instalarea cablurilor de telecomunicatii ... in cladire in tub existent:,0.70,0.88,1.50
-Instalarea cablurilor de telecomunicatii ... in cladire in tub existent:,1.20,1.50,1.50
-"Tub de protectie ignifug, diametru 12 mm inclusiv sistemele de fixare,inbinare si derivatie",0.50,0.63,0.80
-"Doze de derivatie sau ramificaie p.cabluri,cond.elec.,mont.ingr.apar.pe dibluri/console, mediu normal",26.00,32.50,10.00
-"Intreruptor manual ... unipolar, constructie normala sau impermeabila (flans), montat îngropat",12.00,15.00,10.00
-"Comutator unipolar ... pentru scara (cruce sau de capat) constructie normala sau constructie impermeabila (flans), montat îngropat",8.00,10.00,10.00
-"Priza ... bipolara, simpla sau dubla, constructie normala sau constructie impermeabila (flans), cu sau fara contact de protectie (nul), montata îngropat",12.00,15.00,10.00
-"Corp de iluminat, pentru lampi fluorescente tubulare ... neetans, montat pe dibluri (bolturi) metalice",30.00,37.50,12.00
-"Cablu pentru instalatii de locuri de lampa sau priza, avînd sectiunea conductelor pîna la 4 mmp, montat cu scoabe (cleme de prindere) din bachelita pe ... console fixate direct în perete, inclusiv consolele",0.68,0.85,1.50
-"Cablu pentru instalatii de locuri de lampa sau priza, avînd sectiunea conductelor pîna la 4 mmp, montat cu scoabe (cleme de prindere) din bachelita pe ... console fixate direct în perete, inclusiv consolele",1.08,1.35,1.50
-"Cablu pentru energie electrica, montat cu scoabe (cleme de prindere) din bachelita, direct pe zid, cablul având conducte cu sectiunea ... pîna la 10 mmp, pe dibluri de lemn",5.96,7.45,2.00
-"Tablou electric, capsulat, compus din cutii (de bare de singuranta, intermediare, terminale) montate pe schelet metalic , tabloul având ... pîna la 6 cutii",541.80,677.25,101.59
-Centrala detectie incendiu adresabila 4-8 bucle,3500.00,4375.00,0.00
-Convertor de la serial la Ethernet,250.00,312.50,0.00
-Comunicator GSM,200.00,250.00,0.00
-"Detector de fum n",26.00,32.50,0.00
-Detector multicriterial,28.00,35.00,0.00
-Indicator luminos pentru detectoarele din tavanul fals,5.00,6.25,0.00
-Buton manual de incendiu de interior - carcasa rosie,28.00,35.00,0.00
-Sirena cu flash de interior,110.00,137.50,0.00
-Sirena conventionala de exterior cu flash,60.00,75.00,0.00
-Modul adresabil,70.00,87.50,0.00
-Modul adresabil 8IN,120.00,150.00,0.00
-Modul adresabil 2in/1out,90.00,112.50,0.00
-Sursa de tensiune 24V/5A EN54-4,200.00,250.00,0.00
-Baterie reîncarcabila plumb-acid 7.5Ah/12V,12.00,15.00,0.00
-Baterie reîncarcabila plumb-acid 24Ah/12V,25.00,31.25,0.00
+﻿descriere,pretAchizitie,pretVanzare,manopera,,
+"""Camin prefabricat din beton""","""1700""","""0""","""300""",,
+"""Tub metalic 20mm""","""2""","""0""","""1""",,
+"""Tub corugat PEHD 90''","""1.74''","""0""","""1.2''",,
+"""Tub corugat PEHD 50''","""1.12''","""0""","""1.2''",,
+"""Tub corugat PEHD 63''","""1.22''","""0""","""1.2''",,
+"""Platbanda Ol-Zn 40x4 mm""","""2""","""0""","""4""",,
+"""Platbanda Ol-Zn 25x4 mm""","""1.8""","""0""","""3""",,
+"""Electrod din teava Ol-Zn""","""30""","""0""","""20""",,
+"""Masurare priza de pamant""","""0""","""0""","""500""",,
+"""Pat cabluri din tabla perforata 100x60mm""","""6.48""","""0""","""5""",,
+"""Pat cabluri din tabla perforata 200x60mm""","""7.20""","""0""","""6""",,
+"""Pat cabluri din tabla perforata 300x60mm""","""8.48""","""0""","""7""",,
+"""Pat cabluri din tabla perforata 400x60mm""","""12.34""","""0""","""8""",,
+"""Pat cabluri din tabla perforata 500x60mm""","""16.28""","""0""","""9""",,
+"""Pat cabluri din tabla perforata 600x60mm""","""19.89""","""0""","""10""",,
+"""Pat cabluri din tabla perforata 100x60mm,rezistent la foc""","""6.47""","""0""","""5""",,
+"""Pat cabluri din tabla perforata 200x60mm,rezistent la foc""","""8.25""","""0""","""6""",,
+"""Pat cabluri din tabla perforata 300x60mm,rezistent la foc""","""10.50""","""0""","""7""",,
+"""Pat cabluri din tabla perforata 400x60mm,rezistent la foc""","""13.31""","""0""","""8""",,
+"""Pat cabluri din tabla perforata 500x60mm,rezistent la foc""","""20.66""","""0""","""9""",,
+"""Pat cabluri din tabla perforata 600x60mm,rezistent la foc""","""24.21""","""0""","""10""",,
+"""Pat cabluri tip scara din tabla zincata 100x60mm,rezistent la foc""","""6.21""","""0""","""5""",,
+"""Pat cabluri tip scara din tabla zincata 200x60mm,rezistent la foc""","""7.26""","""0""","""6""",,
+"""Pat cabluri tip scara din tabla zincata 300x60mm,rezistent la foc""","""8.92""","""0""","""7""",,
+"""Pat cabluri tip scara din tabla zincata 400x60mm,rezistent la foc""","""12.34""","""0""","""8""",,
+"""Pat cabluri tip scara din tabla zincata 500x60mm,rezistent la foc""","""16.63""","""0""","""9""",,
+"""Pat cabluri tip scara din tabla zincata 600x60mm,rezistent la foc""","""19.02""","""0""","""10""",,
+"""Pat cabluri tip scara din tabla zincata 100x60mm""","""5.98""","""0""","""5""",,
+"""Pat cabluri tip scara din tabla zincata 200x60mm""","""7.09""","""0""","""6""",,
+"""Pat cabluri tip scara din tabla zincata 300x60mm""","""8.32""","""0""","""7""",,
+"""Pat cabluri tip scara din tabla zincata 400x60mm""","""11.90""","""0""","""8""",,
+"""Pat cabluri tip scara din tabla zincata 500x60mm""","""15.21""","""0""","""9""",,
+"""Pat cabluri tip scara din tabla zincata 600x60mm""","""18.29""","""0""","""10""",,
+"""Tub protectie rigid fara halogen diamentru 16mm inclusiv sistem de prindere""","""0.5""","""0""","""0.8""",,
+"""Tub protectie rigid fara halogen diamentru 20mm inclusiv sistem de prindere""","""0.6""","""0""","""0.8""",,
+"""Tub protectie rigid fara halogen diamentru 25mm inclusiv sistem de prindere""","""0.8""","""0""","""1""",,
+"""Tub protectie rigid fara halogen diamentru 32mm inclusiv sistem de prindere""","""1""","""0""","""1""",,
+"""Tub protectie rigid fara halogen diamentru 40mm inclusiv sistem de prindere""","""1.2""","""0""","""1""",,
+"""Tub protectie rigid fara halogen diamentru 50mm inclusiv sistem de prindere""","""1.5""","""0""","""1.2""",,
+"""Tub protectie rigid fara halogen diamentru 63mm inclusiv sistem de prindere""","""1.8""","""0""","""1.2""",,
+"""Tub protectie flexibil fara halogen diamentru 16mm inclusiv sistem de prindere""","""0.5""","""0""","""0.8""",,
+"""Tub protectie flexibil fara halogen diamentru 20mm inclusiv sistem de prindere""","""0.6""","""0""","""0.8""",,
+"""Tub protectie flexibil fara halogen diamentru 25mm inclusiv sistem de prindere""","""0.8""","""0""","""1""",,
+"""Tub protectie flexibil fara halogen diamentru 32mm inclusiv sistem de prindere""","""1""","""0""","""1""",,
+"""Tub protectie flexibil fara halogen diamentru 40mm inclusiv sistem de prindere""","""1.2""","""0""","""1""",,
+"""Tub protectie flexibil fara halogen diamentru 50mm inclusiv sistem de prindere""","""1.5""","""0""","""1.2""",,
+"""Tub protectie flexibil fara halogen diamentru 63mm inclusiv sistem de prindere""","""1.8""","""0""","""1.2""",,
+"""Priza simpla cu contact de protectie, 2P+PE, 16A/230V, IP20, culoare alba""","""5.20""","""0""","""7""",,
+"""Priza simpla cu contact de protectie, 2P+PE, 16A/230V, IP44, culoare alba""","""6.54""","""0""","""7""",,
+"""Priza simpla cu contact de protectie, 2P+PE, 16A/230V, IP54, culoare alba""","""7.35""","""0""","""7""",,
+"""Priza dubla cu contact de protectie, 2P+PE, 16A/230V, IP20, culoare alba""","""9.20""","""0""","""8""",,
+"""Priza dubla cu contact de protectie, 2P+PE, 16A/230V, IP44, culoare alba""","""11.08""","""0""","""8""",,
+"""Priza dubla cu contact de protectie, 2P+PE, 16A/230V, IP54, culoare alba""","""12.02""","""0""","""8""",,
+"""Priza simpla cu contact de protectie, 2P+PE, 16A/230V, IP20, culoare rosie""","""7.02""","""0""","""7""",,
+"""Priza simpla cu contact de protectie, 2P+PE, 16A/230V, IP44, culoare rosie""","""8.22""","""0""","""7""",,
+"""Priza simpla cu contact de protectie, 2P+PE, 16A/230V, IP54, culoare rosie""","""8.78""","""0""","""7""",,
+"""Priza dubla cu contact de protectie, 2P+PE, 16A/230V, IP20, culoare rosie""","""12.08""","""0""","""8""",,
+"""Priza dubla cu contact de protectie, 2P+PE, 16A/230V, IP44, culoare rosie""","""12.48""","""0""","""8""",,
+"""Priza dubla cu contact de protectie, 2P+PE, 16A/230V, IP54, culoare rosie""","""12.88""","""0""","""8""",,
+"""Priza simpla cu contact de protectie, 2P+PE, 16A/230V, IP20, culoare verde""","""7.02""","""0""","""7""",,
+"""Priza simpla cu contact de protectie, 2P+PE, 16A/230V, IP44, culoare verde""","""8.22""","""0""","""7""",,
+"""Priza simpla cu contact de protectie, 2P+PE, 16A/230V, IP54, culoare verde""","""8.78""","""0""","""7""",,
+"""Priza dubla cu contact de protectie, 2P+PE, 16A/230V, IP20, culoare verde""","""12.08""","""0""","""8""",,
+"""Priza dubla cu contact de protectie, 2P+PE, 16A/230V, IP44, culoare verde""","""12.48""","""0""","""8""",,
+"""Priza dubla cu contact de protectie, 2P+PE, 16A/230V, IP54, culoare verde""","""12.88""","""0""","""8""",,
+"""Priza antibacteriana simpla cu contact de protectie, 2P+PE, 16A/230V, IP20, culoare alba""","""8.11""","""0""","""7""",,
+"""Priza antibacteriana simpla cu contact de protectie, 2P+PE, 16A/230V, IP20, culoare rosie""","""9.22""","""0""","""7""",,
+"""Priza antibacteriana simpla cu contact de protectie, 2P+PE, 16A/230V, IP20, culoare verde""","""9.22""","""0""","""7""",,
+"""Priza antibacteriana dubla cu contact de protectie, 2P+PE, 16A/230V, IP20, culoare alba""","""14.40""","""0""","""8""",,
+"""Priza antibacteriana dubla cu contact de protectie, 2P+PE, 16A/230V, IP20, culoare rosie""","""15.10""","""0""","""8""",,
+"""Priza antibacteriana dubla cu contact de protectie, 2P+PE, 16A/230V, IP20, culoare verde""","""15.10""","""0""","""8""",,
+"""Doza pardoseala 12 module""","""24.87""","""0""","""15""",,
+"""Intrerupator simplu 230V/10A, grad protectie IP20""","""5.24""","""0""","""7""",,
+"""Intrerupator simplu 230V/10A, grad protectie IP44""","""5.54""","""0""","""7""",,
+"""Intrerupator simplu 230V/10A, grad protectie IP54""","""5.84""","""0""","""7""",,
+"""Intrerupator dublu 230V/10A, grad protectie IP20""","""6.34""","""0""","""7""",,
+"""Intrerupator dublu 230V/10A, grad protectie IP44""","""6.89""","""0""","""7""",,
+"""Intrerupator dublu 230V/10A, grad protectie IP54""","""7.21""","""0""","""7""",,
+"""Intrerupator cap-scara 230V/10A, grad protectie IP20""","""5.58""","""0""","""7""",,
+"""Intrerupator cap-scara 230V/10A, grad protectie IP44""","""5.92""","""0""","""7""",,
+"""Intrerupator cap-scara 230V/10A, grad protectie IP54""","""6.06""","""0""","""7""",,
+"""Senzor de miscare 230V/10A, raza detectie 12m, 360 grade, grad protectie IP65""","""35""","""0""","""15""",,
+"""Senzor de miscare 230V/10A, raza detectie 12m, 180 grade, grad protectie IP65""","""35""","""0""","""15""",,
+"""Senzor de miscare 230V/10A, raza detectie 10m, 360 grade, grad protectie IP65""","""35""","""0""","""15""",,
+"""Senzor de miscare 230V/10A, raza detectie 10m, 180 grade, grad protectie IP65""","""35""","""0""","""15""",,
+"""Senzor de miscare 230V/10A, raza detectie 8m, 360 grade, grad protectie IP65""","""30""","""0""","""15""",,
+"""Senzor de miscare 230V/10A, raza detectie 8m, 180 grade, grad protectie IP65""","""30""","""0""","""15""",,
+"""Senzor de miscare 230V/10A, raza detectie 6m, 360 grade, grad protectie IP65""","""30""","""0""","""15""",,
+"""Senzor de miscare 230V/10A, raza detectie 6m, 180 grade, grad protectie IP65""","""30""","""0""","""15""",,
+"""Piesa de prindere intersectie tip ""X"" pentru platbanda Ol-Zn ""","""3""","""0""","""2""",,
+"""Piesa de prindere intersectie tip ""T"" pentru platbanda Ol-Zn ""","""2.5""","""0""","""2""",,
+"Piesa de legatura""","""2.2""","""0""","""2""",,
+"""Piesa de separatie""","""30""","""0""","""12""",,
+"""Conductor rotund 10mm""","""2.2""","""0""","""2""",,
+"""Dispozitiv de fixare PDA pe terasa""","""150""","""0""","""50""",,
+"""Contor lovituri de trasnet""","""280""","""0""","""80""",,
+"""Bara egalizare potential""","""40""","""0""","""25""",,
+"""BEP""","""40""","""0""","""25""",,
+"""Priză industrială trifazată, 3P+N+PE 16A/400V cu contact de protecție""","""7.89""","""0""","""8""",,
+"""Doza centralizatoare""","""2.25""","""0""","""7""",,
+"""Doza derivatie""","""2.25""","""0""","""7""",,
+"""Doza RF""","""24""","""0""","""7""",,
+"""Statie de incarcare automobile electrice, 11KW""","""1905.69""","""0""","""200""",,
+"""Catarg, complet echipat, inclusiv sistem de prindere de perete""","""150""","""0""","""50""",,
+"""Racord electric 230V""","""0""","""0""","""5""",,
+"""Racord electric 400V""","""0""","""0""","""10""",,
+"""Doză de pardoseală cu 16 de module""","""59.95""","""0""","""20""",,
+"""N2XH 2x1,5mm""","""0.67""","""0""","""1.2""",,
+"""N2XH 2x2,5mm""","""1.04""","""0""","""1.2""",,
+"""N2XH 3x1,5mm""","""0.89""","""0""","""1.2""",,
+"""N2XH 3x2,5mm""","""1.32""","""0""","""1.2""",,
+"""N2XH 3x4mm""","""1.96""","""0""","""1.2""",,
+"""N2XH 3x6mm""","""2.79""","""0""","""1.2""",,
+"""N2XH 3x10mm""","""5.05""","""0""","""2""",,
+"""N2XH 3x16mm""","""7.84""","""0""","""2.5""",,
+"""N2XH 4x1,5mm""","""1.14""","""0""","""1.2""",,
+"""N2XH 4x2,5mm""","""1.71""","""0""","""1.2""",,
+"""N2XH 4x4mm""","""2.72""","""0""","""1.2""",,
+"""N2XH 4x6mm""","""3.97""","""0""","""1.2""",,
+"""N2XH 4x10mm""","""6.67""","""0""","""2""",,
+"""N2XH 4x16mm""","""10.35""","""0""","""2.5""",,
+"""N2XH 5x1,5mm""","""1.39""","""0""","""1.2""",,
+"""N2XH 5x2,5mm""","""2.10""","""0""","""1.2""",,
+"""N2XH 5x4mm""","""3.16""","""0""","""1.5""",,
+"""N2XH 5x6mm""","""4.53""","""0""","""1.5""",,
+"""N2XH 5x10mm""","""7.62""","""0""","""2""",,
+"""N2XH 5x16mm""","""11.90""","""0""","""2.5""",,
+"""N2XH 5x25mm""","""18.78""","""0""","""4""",,
+"""N2XH 5x35mm""","""26.08""","""0""","""5""",,
+"""N2XH 5x50mm""","""37.28""","""0""","""6""",,
+"""N2XH 5x70mm""","""54.15""","""0""","""7",,
+"""N2XH 4x25+16mm""","""18.08""","""0""","""4""",,
+"""N2XH 4x35+16mm""","""23.93""","""0""","""5""",,
+"""N2XH 4x50+25mm""","""33.38""","""0""","""6""",,
+"""N2XH 4x70+35mm""","""47.55""","""0""","""7",,
+"""N2XH 4x95+50mm""","""64.84""","""0""","""8""",,
+"""N2XH 4x120+70mm""","""85.04""","""0""","""10""",,
+"""N2XH 4x150+70mm""","""102.49""","""0""","""14""",,
+"""N2XH 3x25+16mm""","""14.38""","""0""","""4""",,
+"""N2XH 3x35+16mm""","""18.77""","""0""","""5""",,
+"""N2XH 3x50+25mm""","""26.08""","""0""","""6""",,
+"""N2XH 3x70+35mm""","""36.87""","""0""","""7",,
+"""N2XH 3x95+50mm""","""50.42""","""0""","""8""",,
+"""N2XH 3x120+70mm""","""64.22""","""0""","""10""",,
+"""N2XH 3x150+70mm""","""76.82""","""0""","""14""",,
+"""N2XH 3x185+95mm""","""98.24""","""0""","""18""",,
+"""N2XH 3x240+120mm""","""126.38""","""0""","""22""",,
+"""N2XH 1x16mm""","""2.41""","""0""","""2""",,
+"""N2XH 1x25mm""","""3.65""","""0""","""3""",,
+"""N2XH 1x35mm""","""5.01""","""0""","""4""",,
+"""N2XH 1x50mm""","""6.88""","""0""","""5""",,
+"""N2XH 1x70mm""","""9.81""","""0""","""6""",,
+"""N2XH 1x95mm""","""13.41""","""0""","""7""",,
+"""N2XH 1x120mm""","""16.65""","""0""","""8""",,
+"""N2XH 1x150mm""","""20.60""","""0""","""9""",,
+"""N2XH 1x185mm""","""26.11""","""0""","""10""",,
+"""N2XH 1x240mm""","""33.73""","""0""","""12""",,
+"""CYY-F 2x1.5mm""","""0.54""","""0""","""1.2""",,
+"""CYY-F 2x2.5mm""","""0.85""","""0""","""1.2""",,
+"""CYY-F 3x1.5mm""","""0.68""","""0""","""1.2""",,
+"""CYY-F 3x2.5mm""","""1.08""","""0""","""1.2""",,
+"""CYY-F 3x4mm""","""1.82""","""0""","""1.2""",,
+"""CYY-F 3x6mm""","""2.71""","""0""","""1.2""",,
+"""CYY-F 3x10mm""","""4.45""","""0""","""2""",,
+"""CYY-F 3x16mm""","""7.51""","""0""","""2.5""",,
+"""CYY-F 4x1.5mm""","""1.06""","""0""","""1.2""",,
+"""CYY-F 4x2.5mm""","""1.60""","""0""","""1.2""",,
+"""CYY-F 4x4mm""","""2.44""","""0""","""1.2""",,
+"""CYY-F 4x6mm""","""3.56""","""0""","""1.2""",,
+"""CYY-F 4x10mm""","""5.96""","""0""","""2""",,
+"""CYY-F 4x16mm""","""9.84""","""0""","""2.5""",,
+"""CYY-F 5x1.5mm""","""1.27""","""0""","""1.2""",,
+"""CYY-F 5x2.5mm""","""1.96""","""0""","""1.2""",,
+"""CYY-F 5x4mm""","""2.86""","""0""","""1.5""",,
+"""CYY-F 5x6mm""","""4.35""","""0""","""1.5""",,
+"""CYY-F 5x10mm""","""7.34""","""0""","""2""",,
+"""CYY-F 5x16mm""","""11.62""","""0""","""2.5""",,
+"""CYY-F 5x25mm""","""18.32""","""0""","""4""",,
+"""CYY-F 5x35mm""","""23.46""","""0""","""5""",,
+"""CYY-F 5x50mm""","""36.64""","""0""","""6""",,
+"""CYY-F 5x70mm""","""52.31""","""0""","""7",,
+"""CYY-F 4x25+16mm""","""17.92""","""0""","""4""",,
+"""CYY-F 4x35+16mm""","""23.72""","""0""","""5""",,
+"""CYY-F 4x50+25mm""","""33.08""","""0""","""6""",,
+"""CYY-F 4x70+35mm""","""47.14""","""0""","""7",,
+"""CYY-F 4x95+50mm""","""64.27""","""0""","""8""",,
+"""CYY-F 4x120+70mm""","""83.60""","""0""","""10""",,
+"""CYY-F 4x150+70mm""","""100.75""","""0""","""14""",,
+"""CYY-F 3x25+16mm""","""13.58""","""0""","""4""",,
+"""CYY-F 3x35+16mm""","""16.56""","""0""","""5""",,
+"""CYY-F 3x50+25mm""","""24.28""","""0""","""6""",,
+"""CYY-F 3x70+35mm""","""34.33""","""0""","""7",,
+"""CYY-F 3x95+50mm""","""46.94""","""0""","""8""",,
+"""CYY-F 3x120+70mm""","""59.79""","""0""","""10""",,
+"""CYY-F 3x150+70mm""","""71.52""","""0""","""14""",,
+"""CYY-F 3x185+95mm""","""91.47""","""0""","""18""",,
+"""CYY-F 3x240+120mm""","""117.67""","""0""","""22""",,
+"""CYY-F 1x16mm""","""2.36""","""0""","""2""",,
+"""CYY-F 1x25mm""","""3.58""","""0""","""3""",,
+"""CYY-F 1x35mm""","""4.92""","""0""","""4""",,
+"""CYY-F 1x50mm""","""6.75""","""0""","""5""",,
+"""CYY-F 1x70mm""","""9.63""","""0""","""6""",,
+"""CYY-F 1x95mm""","""13.17""","""0""","""7""",,
+"""CYY-F 1x120mm""","""16.34""","""0""","""8""",,
+"""CYY-F 1x150mm""","""20.23""","""0""","""9""",,
+"""CYY-F 1x185mm""","""25.64""","""0""","""10""",,
+"""CYY-F 1x240mm""","""33.12""","""0""","""12""",,
+"""CYABY-F 1X25mm""","""3.93""","""0""","""3""",,
+"""CYABY-F 1X35mm""","""5.26""","""0""","""4""",,
+"""CYABY-F 1X50mm""","""7.20""","""0""","""5""",,
+"""CYABY-F 1X70mm""","""10.10""","""0""","""6""",,
+"""CYABY-F 1X95mm""","""13.68""","""0""","""7""",,
+"""CYABY-F 1X120mm""","""16.97""","""0""","""8""",,
+"""CYABY-F 1X150mm""","""20.81""","""0""","""9""",,
+"""CYABY-F 1X185mm""","""26.26""","""0""","""10""",,
+"""CYABY-F 1X240mm""","""33.85""","""0""","""12""",,
+"""CYABY-F 1X300mm""","""42.46""","""0""","""15""",,
+"""CYABY-F 3X1.5mm""","""1.18""","""0""","""1.2""",,
+"""CYABY-F 3X2.5mm""","""1.61""","""0""","""1.2""",,
+"""CYABY-F 3X4mm""","""2.32""","""0""","""1.2""",,
+"""CYABY-F 3X6mm""","""3.17""","""0""","""1.2""",,
+"""CYABY-F 3X10mm""","""5.06""","""0""","""2""",,
+"""CYABY-F 3X16mm""","""7.60""","""0""","""2.5""",,
+"""CYABY-F 3X25mm""","""11.54""","""0""","""4""",,
+"""CYABY-F 3X25+16mm""","""13.53""","""0""","""4""",,
+"""CYABY-F 3X35mm""","""15.61""","""0""","""5""",,
+"""CYABY-F 3X35+16mm""","""17.58""","""0""","""5""",,
+"""CYABY-F 3X50mm""","""21.24""","""0""","""6""",,
+"""CYABY-F 3X50+25mm""","""24.77""","""0""","""6""",,
+"""CYABY-F 3X70mm""","""29.99""","""0""","""7""",,
+"""CYABY-F 3X70+35mm""","""34.92""","""0""","""7""",,
+"""CYABY-F 3X95mm""","""40.65""","""0""","""8""",,
+"""CYABY-F 3X95+50mm""","""48.41""","""0""","""8""",,
+"""CYABY-F 3X95+70mm""","""51.27""","""0""","""8""",,
+"""CYABY-F 3X120mm""","""51.42""","""0""","""10""",,
+"""CYABY-F 3X120+70mm""","""61.38""","""0""","""10""",,
+"""CYABY-F 3X150mm""","""63.15""","""0""","""14""",,
+"""CYABY-F 3X150+70mm""","""73.18""","""0""","""14""",,
+"""CYABY-F 3X185mm""","""79.59""","""0""","""18""",,
+"""CYABY-F 3X185+95mm""","""93.29""","""0""","""18""",,
+"""CYABY-F 3X240+120mm""","""119.71""","""0""","""22""",,
+"""CYABY-F 4X1.5mm""","""1.45""","""0""","""1.2""",,
+"""CYABY-F 4X2.5mm""","""2.02""","""0""","""1.2""",,
+"""CYABY-F 4X4mm""","""2.94""","""0""","""1.2""",,
+"""CYABY-F 4X6mm""","""4.07""","""0""","""1.2""",,
+"""CYABY-F 4X10mm""","""6.55""","""0""","""2""",,
+"""CYABY-F 4X16mm""","""9.90""","""0""","""2.5""",,
+"""CYABY-F 4X25mm""","""15.16""","""0""","""4""",,
+"""CYABY-F 4X25+16mm""","""17.17""","""0""","""4""",,
+"""CYABY-F 4X35mm""","""20.60""","""0""","""5""",,
+"""CYABY-F 4X35+16mm""","""22.69""","""0""","""5""",,
+"""CYABY-F 4X50mm""","""28.09""","""0""","""6""",,
+"""CYABY-F 4X50+25mm""","""32.45""","""0""","""6""",,
+"""CYABY-F 4X70mm""","""40.27""","""0""","""7""",,
+"""CYABY-F 4X70+35mm""","""45.58""","""0""","""7""",,
+"""CYABY-F 4X95mm""","""54.84""","""0""","""8""",,
+"""CYABY-F 4X95+50mm""","""62.17""","""0""","""8""",,
+"""CYABY-F 4X120mm""","""68.25""","""0""","""10""",,
+"""CYABY-F 4X120+70mm""","""78.17""","""0""","""10""",,
+"""CYABY-F 4X150mm""","""83.78""","""0""","""14""",,
+"""CYABY-F 4X150+70mm""","""94.06""","""0""","""14""",,
+"""CYABY-F 4X185mm""","""105.62""","""0""","""18""",,
+"""CYABY-F 4X185+95mm""","""119.27""","""0""","""18""",,
+"""CYABY-F 4X240mm""","""135.43""","""0""","""22""",,
+"""CYABY-F 5X1.5mm""","""1.72""","""0""","""1.2""",,
+"""CYABY-F 5X2.5mm""","""2.42""","""0""","""1.2""",,
+"""CYABY-F 5X4mm""","""3.58""","""0""","""1.5""",,
+"""CYABY-F 5X6mm""","""4.97""","""0""","""1.5""",,
+"""CYABY-F 5X10mm""","""8.05""","""0""","""2""",,
+"""CYABY-F 5X16mm""","""11.98""","""0""","""2.5""",,
+"""CYABY-F 5X25mm""","""18.81""","""0""","""4""",,
+"""CYABY-F 5X35mm""","""25.63""","""0""","""5""",,
+"""CYABY-F 5X50mm""","""36.03""","""0""","""6""",,
+"""CYABY-F 5X70mm""","""50.31""","""0""","""7",,
+"""NHXH E90/FE180 2x1.5mm""","""0.79""","""0""","""1.2""",,
+"""NHXH E90/FE180 2x2.5mm""","""1.19""","""0""","""1.2""",,
+"""NHXH E90/FE180 3x1.5mm""","""1.07""","""0""","""1.2""",,
+"""NHXH E90/FE180 3x2.5mm""","""1.57""","""0""","""1.2""",,
+"""NHXH E90/FE180 3x4mm""","""2.43""","""0""","""1.2""",,
+"""NHXH E90/FE180 3x6mm""","""3.54""","""0""","""1.2""",,
+"""NHXH E90/FE180 3x10mm""","""6.79""","""0""","""2""",,
+"""NHXH E90/FE180 3x16mm""","""9.28""","""0""","""2.5""",,
+"""NHXH E90/FE180 3x25+16mm""","""17.23""","""0""","""4""",,
+"""NHXH E90/FE180 3x35+16mm""","""22.34""","""0""","""5""",,
+"""NHXH E90/FE180 3x50+25mm""","""30.40""","""0""","""6""",,
+"""NHXH E90/FE180 3x70+35mm""","""43.09""","""0""","""7",,
+"""NHXH E90/FE180 3x95+50mm""","""59.14""","""0""","""8""",,
+"""NHXH E90/FE180 3x120+70mm""","""75.86""","""0""","""10""",,
+"""NHXH E90/FE180 3x150+70mm""","""90.63""","""0""","""14""",,
+"""NHXH E90/FE180 3x185+95mm""","""114.97""","""0""","""18""",,
+"""NHXH E90/FE180 3x240+120mm""","""149.89""","""0""","""22""",,
+"""NHXH E90/FE180 4x1.5mm""","""1.38""","""0""","""1.2""",,
+"""NHXH E90/FE180 4x2.5mm""","""2.10""","""0""","""1.2""",,
+"""NHXH E90/FE180 4x4mm""","""3.18""","""0""","""1.2""",,
+"""NHXH E90/FE180 4x6mm""","""4.71""","""0""","""1.2""",,
+"""NHXH E90/FE180 4x10mm""","""7.93""","""0""","""2""",,
+"""NHXH E90/FE180 4x16mm""","""12.01""","""0""","""2.5""",,
+"""NHXH E90/FE180 5x1.5mm""","""1.75""","""0""","""1.2""",,
+"""NHXH E90/FE180 5x2.5mm""","""2.55""","""0""","""1.2""",,
+"""NHXH E90/FE180 5x4mm""","""4.01""","""0""","""1.5""",,
+"""NHXH E90/FE180 5x6mm""","""5.50""","""0""","""1.5""",,
+"""NHXH E90/FE180 5x10mm""","""9.34""","""0""","""2""",,
+"""NHXH E90/FE180 5x16mm""","""14.01""","""0""","""2.5""",,
+"""NHXH E90/FE180 5x25mm""","""22.13""","""0""","""4""",,
+"""NHXH E90/FE180 5x35mm""","""30.17""","""0""","""5""",,
+"""NHXH E90/FE180 5x50mm""","""42.21""","""0""","""6""",,
+"""NHXH E90/FE180 7x1.5mm""","""2.55""","""0""","""1.5""",,
+"""NHXH E90/FE180 7x2.5mm""","""3.98""","""0""","""1.5""",,
+"""NHXH E90/FE180 7x4mm""","""5.94""","""0""","""1.5""",,
+"""NHXH E90/FE180 7x6mm""","""8.52""","""0""","""1.5""",,
+"""NHXH E90/FE180 12x1.5mm""","""6.06""","""0""","""2""",,
+"""NHXH E90/FE180 1x16mm""","""3.52""","""0""","""3""",,
+"""NHXH E90/FE180 1x25mm""","""4.37""","""0""","""4""",,
+"""NHXH E90/FE180 1x35mm""","""5.86""","""0""","""5""",,
+"""NHXH E90/FE180 1x50mm""","""8.04""","""0""","""6""",,
+"""NHXH E90/FE180 1x70mm""","""11.17""","""0""","""7""",,
+"""NHXH E90/FE180 1x95mm""","""15.09""","""0""","""8""",,
+"""NHXH E90/FE180 1x120mm""","""18.64""","""0""","""9""",,
+"""NHXH E90/FE180 1x150mm""","""23.03""","""0""","""10""",,
+"""NHXH E90/FE180 1x185mm""","""28.60""","""0""","""12""",,
+"""NHXH E90/FE180 1x240mm""","""37.39""","""0""","""15""",,
+"""NHXH E90/FE180 1x300mm""","""48.75""","""0""","""18""",,
+"""Detector de fum""","""24""","""0""","""12""",,
+"""Detector de temperatura""","""24""","""0""","""12""",,
+"""Detector multicriterial de fum și caldura""","""26""","""0""","""12""",,
+"""Indicator paralel""","""5""","""0""","""5""",,
+"""Soclu pentru detector""","""3""","""0""","""5""",,
+"""Buton manual de alarmare""","""28""","""0""","""15""",,
+"""Sirena Adresabila Interior""","""120""","""0""","""15""",,
+"""Sirena Conventionala""","""70""","""0""","""20""",,
+"""Sursa de alimentare 24V, complet echipata""","""220""","""0""","""25""",,
+"""Modul adresabil 2IN/2OUT""","""70""","""0""","""20""",,
+"""Modul adresabil 4IN/2OUT""","""120""","""0""","""20""",,
+"""Modul adresabil 4IN""","""90""","""0""","""20""",,
+"""Modul adresabil 4OUT""","""90""","""0""","""20""",,
+"""Modul adresabil 8IN""","""140""","""0""","""20""",,
+"""Modul adresabil 8OUT""","""140""","""0""","""20""",,
+"""Detector pentru tubulaturile de ventilatie""","""250""","""0""","""50""",,
+"""Statie Lucru""","""2200""","""0""","""200""",,
+"""Monitor 32""","""300""","""0""","""50""",,
+"""Panou repetor""","""750""","""0""","""50""",,
+"""Detector inundatie""","""40""","""0""","""12""",,
+"""Detector monoxid""","""80""","""0""","""15""",,
+"""Panou luminos averizare""","""20""","""0""","""12""",,
+"""Centrala detectie monoxid""","""800""","""0""","""100""",,
+"""JE-H(St)H E90/F180 2x2x0.8mm""","""0.8""","""0""","""1.2""",,
+"""JE-H(St)H E90/F180 1x2x0.8mm""","""0.7""","""0""","""1.2""",,
+"""Detector conventional gaz metan""","""180""","""0""","""50""",,
+"""Buton actionare trapa desfumare in caz de incendiu""","""28""","""0""","""15""",,
+"""Camera video fixa interior de tip dome""","""0""","""0""","""15""",,
+"""Camera video fixa exterior de tip bullet""","""0""","""0""","""20""",,
+"""Rack 19"", 12U""","""150""","""0""","""25""",,
+"""Rack 19"", 15U""","""175""","""0""","""50""",,
+"""Rack 19"", 18U""","""300""","""0""","""75""",,
+"""Rack 19"", 19U""","""350""","""0""","""75""",,
+"""Rack 19"", 20U""","""450""","""0""","""100""",,
+"""Rack 19"", 22U""","""500""","""0""","""100""",,
+"""Rack 19"", 42U""","""700""","""0""","""150""",,
+"""Patch Panel 24 porturi RJ45""","""60""","""0""","""50""",,
+"""Patch Panel 16 porturi RJ45""","""40""","""0""","""50""",,
+"""Cablu S/FTP Cat.6a""","""0.7""","""0""","""1.2""",,
+"""Cablu FTP Cat.6a""","""0.7""","""0""","""1.2""",,
+"""Cablu UTP Cat.6a""","""0.7""","""0""","""1.2""",,
+"""Organizator cabluri, 1U, complet echipat""","""8""","""0""","""5""",,
+"""Bara de alimentare, PDU, 19""","""20""","""0""","""5""",,
+"""Acces Point""","""180""","""0""","""20""",,
+"""Cablu coaxial RG6""","""0.6""","""0""","""1.2""",,
+"""Priza simpla voce-date""","""10.09""","""0""","""7""",,
+"""Priza dubla voce-date""","""15.49""","""0""","""8""",,
+"""Priza antibacteriana simpla voce-date""","""13.97""","""0""","""7""",,
+"""Priza antibacteriana dubla voce-date""","""23.18""","""0""","""8""",,
+"""Fibra optica single mode 24 fibre""","""1.2""","""0""","""1.2""",,
+"""Fibra optica multi mode 24 fibre""","""4""","""0""","""1.2""",,
+"""Fibra optica single mode 12 fibre""","""0.8""","""0""","""1.2""",,
+"""Fibra optica multi mode 12 fibre""","""2.2""","""0""","""1.2""",,
+"""Fibra optica single mode 8 fibre""","""0.6""","""0""","""1.2""",,
+"""Fibra optica multi mode 8 fibre""","""1.8""","""0""","""1.2""",,
+"""Fibra optica single mode 4 fibre""","""0.5""","""0""","""1.2""",,
+"""Fibra optica multi mode 4 fibre""","""1.2""","""0""","""1.2""",,
+"""Fibra optica single mode fibre""","""0.6""","""0""","""1.2""",,
+"""Fibra optica multi mode fibre""","""1.2""","""0""","""1.2""",,
+"""Centrala antiefractie si control acces""","""450""","""0""","""50""",,
+"""Centrala antiefractie""","""350""","""0""","""50""",,
+"""Centrala control acces""","""350""","""0""","""50""",,
+"""Modul extindere zone 8 intrari""","""50""","""0""","""25""",,
+"""Modul extindere 4 relee""","""40""","""0""","""20""",,
+"""Modul comunicator GSM/GPRS""","""220""","""0""","""30""",,
+"""Tastatura LCD""","""120""","""0""","""30""",,
+"""Detector miscare PIR""","""40""","""0""","""15""",,
+"""Contact magnetic""","""5""","""0""","""3""",,
+"""Buton panica""","""30""","""0""","""15""",,
+"""Sirena exterior cu flash""","""60""","""0""","""20""",,
+"""Dector de geam spart""","""45""","""0""","""12""",,
+"""Cititor proximitate""","""22""","""0""","""12""",,
+"""Buton cerere acces (REX)""","""15""","""0""","""12""",,
+"""Buton deblocare in caz de urgenta""","""15""","""0""","""12""",,
+"""Electromagnet 280Kgf, nclusiv suporti montaj""","""40""","""0""","""25""",,
+"""Sirena Interior""","""17""","""0""","""12""",,
+"""Cablu FTP cat.5""","""0.5""","""0""","""1.2""",,
+"""Pedala de panica""","""40""","""0""","""15""",,
+"""Post videointerfon - INTERIOR""","""120""","""0""","""15""",,
+"""Post videointerfon - EXTERIOR""","""220""","""0""","""20""",,

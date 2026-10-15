@@ -98,6 +98,7 @@ export default function OfertePage() {
                                     <Table.Column>Creată</Table.Column>
                                     <Table.Column>Status</Table.Column>
                                     <Table.Column className="text-right">Materiale</Table.Column>
+                                    <Table.Column className="text-right">Foi Excel</Table.Column>
                                     <Table.Column className="text-right">Acțiune</Table.Column>
                                 </Table.Header>
                                 <Table.Body>
@@ -116,6 +117,7 @@ export default function OfertePage() {
                                                 {oferta.pendingCount > 0 && <p className="mt-1 text-xs text-muted-foreground">{oferta.pendingCount} de validat</p>}
                                             </Table.Cell>
                                             <Table.Cell className="text-right tabular-nums">{oferta.materialCount || "—"}</Table.Cell>
+                                            <Table.Cell className="text-right tabular-nums"><span title="Numărul foilor incluse în ofertă">{oferta.sheetCount}</span></Table.Cell>
                                             <Table.Cell className="text-right flex flex-1 gap-2 items-center justify-end">
                                                 <Link href={`/oferte/${oferta._id}`} aria-label={`${oferta.status === "completed" ? "Deschide" : "Continuă"} ${oferta.fileName}`}
                                                     className="inline-flex min-h-10 items-center gap-2 whitespace-nowrap text-sm font-medium hover:underline">

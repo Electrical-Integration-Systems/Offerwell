@@ -31,35 +31,32 @@ export const salveazaCurs = internalMutation({
 export const getBNRRates = internalAction({
   args: {},
   handler: async (ctx) => {
-    const response = await fetch("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml");
+    const response = await fetch("https://curs.bnr.ro/nbrfxrates.xml");
     
     if (!response.ok) {
-      throw new Error("Failed to fetch ECB rates");
+      throw new Error("Failed to fetch BNR rates");
     }
     
     const xmlText = await response.text();
     
-    // Regex pentru RON și USD - același format
-    const ronRegex = /currency=['"]RON['"]\s+rate=['"]([0-9.]+)['"]/i;
-    const usdRegex = /currency=['"]USD['"]\s+rate=['"]([0-9.]+)['"]/i;
+    // Regex pentru EUR și USD - noua structură: <Rate currency="EUR">5.3447</Rate>
+    const eurRegex = /<Rate currency=["']EUR["']>([0-9.]+)<\/Rate>/i;
+    const usdRegex = /<Rate currency=["']USD["']>([0-9.]+)<\/Rate>/i;
     
-    const ronMatch = ronRegex.exec(xmlText);
+    const eurMatch = eurRegex.exec(xmlText);
     const usdMatch = usdRegex.exec(xmlText);
     
-    if (!ronMatch) {
+    if (!eurMatch) {
       // Afișăm primele 500 de caractere din XML în loguri pentru a vedea exact structura
-      console.error("XML primit de la ECB (primele 500 caractere):", xmlText.substring(0, 500));
-      throw new Error("Nu am găsit cursul RON în XML-ul ECB.");
+      console.error("XML primit de la BNR (primele 500 caractere):", xmlText.substring(0, 500));
+      throw new Error("Nu am găsit cursul EUR în XML-ul BNR.");
     }
     
-    const eurToRon = parseFloat(ronMatch[1]);
-    const eurToUsd = usdMatch ? parseFloat(usdMatch[1]) : null;
+    const eurToRon = parseFloat(eurMatch[1]);
+    const usdToRon = usdMatch ? parseFloat(usdMatch[1]) : null;
     
-    // Calculez USD->RON din EUR->RON și EUR->USD
-    const usdToRon = eurToUsd ? eurToRon / eurToUsd : null;
-    
-    console.log(`Cursul EUR->RON (Banca Centrala Europeana): ${eurToRon}`);
-    if (usdToRon) console.log(`Cursul USD->RON (calculat): ${usdToRon}`);
+    console.log(`Cursul EUR->RON (Banca Națională a României): ${eurToRon}`);
+    if (usdToRon) console.log(`Cursul USD->RON (Banca Națională a României): ${usdToRon}`);
     
     // Salvăm cursurile în baza de date
     await ctx.runMutation(internal.bnr.salveazaCurs, { moneda: "EUR", valoare: eurToRon });

@@ -2,33 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { Pagination, Spinner } from "@heroui/react";
+import { getCursorPage, PAGE_SIZE, type PageStatus } from "@/lib/cursor-pagination";
 
-export const PAGE_SIZE = 10;
-type PageStatus = "LoadingFirstPage" | "CanLoadMore" | "LoadingMore" | "Exhausted";
+export { PAGE_SIZE };
 
-export function useCursorPagination<Item>(results: Item[], status: PageStatus, loadMore: (count: number) => void, maxPagesToKeep = 3) {
+export function useCursorPagination<Item>(results: Item[], status: PageStatus, loadMore: (count: number) => void) {
   const [requestedPage, setPage] = useState(1);
-  
-  // Keep a sliding window to avoid memory bloat
-  const maxItemsToKeep = PAGE_SIZE * maxPagesToKeep;
-  const windowedResults = results.slice(0, maxItemsToKeep);
-  
-  const loadedPages = Math.ceil(windowedResults.length / PAGE_SIZE);
-  const pageCount = Math.max(1, loadedPages + (status === "CanLoadMore" || status === "LoadingMore" ? 1 : 0));
-  const page = Math.min(requestedPage, pageCount);
-  
+  const { shouldLoadMore, ...pagination } = getCursorPage(results, requestedPage, status);
+
   useEffect(() => {
-    if (status === "CanLoadMore" && windowedResults.length < page * PAGE_SIZE) loadMore(PAGE_SIZE);
-  }, [page, windowedResults.length, status, loadMore]);
-  
-  const loading = status === "LoadingFirstPage" || status === "LoadingMore"
-    || (status === "CanLoadMore" && windowedResults.length < page * PAGE_SIZE);
-  
-  return { page, pageCount, setPage, loading, items: windowedResults.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) };
+    if (shouldLoadMore) loadMore(PAGE_SIZE);
+  }, [shouldLoadMore, results.length, status, loadMore]);
+
+  return { ...pagination, setPage };
 }
 
-export function CursorPagination({ page, pageCount, setPage, loading, disabled = false }: {
-  page: number; pageCount: number; setPage: (page: number) => void; loading: boolean; disabled?: boolean;
+export function CursorPagination({ page, pageCount, setPage, loading, loadingNextPage = false, disabled = false }: {
+  page: number; pageCount: number; setPage: (page: number) => void; loading: boolean; loadingNextPage?: boolean; disabled?: boolean;
 }) {
   const first = Math.max(1, Math.min(page - 1, pageCount - 2));
   const pages = Array.from({ length: Math.min(3, pageCount) }, (_, index) => first + index);
@@ -50,6 +40,9 @@ export function CursorPagination({ page, pageCount, setPage, loading, disabled =
         </Pagination.Item>
       </Pagination.Content>
     </Pagination>
-    <span role="status" className="flex min-h-5 items-center gap-2 text-xs text-muted-foreground">{loading && <Spinner size="sm" />}Pagina {page}</span>
+    <span role="status" className="flex min-h-5 items-center gap-2 text-xs text-muted-foreground">
+      {(loading || loadingNextPage) && <Spinner size="sm" />}Pagina {page}
+      {loadingNextPage && " · Se verifică pagina următoare..."}
+    </span>
   </div>;
 }

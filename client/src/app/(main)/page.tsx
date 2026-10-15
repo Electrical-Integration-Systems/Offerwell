@@ -52,7 +52,8 @@ export default function Home() {
 
   const requestId = useRef(0);
 
-  const performSearch = async (value: string, page: number = 1) => {
+  const performSearch = async (value: string, page: number = 1, modes = { vectorSearch, textSearch }) => {
+    const currentRequest = ++requestId.current;
     if (!value.trim()) {
       setSearchResults([]);
       setSearchedQuery("");
@@ -62,10 +63,9 @@ export default function Home() {
       return;
     }
     
-    const currentRequest = ++requestId.current;
     setIsSearching(true);
     try {
-      if (vectorSearch && textSearch) {
+      if (modes.vectorSearch && modes.textSearch) {
         const { results, total, page: resultPage } = await hybridSearchTypesense<MaterialHit>("materiale", value, await getEmbedding(value), alphaHybridSearch,  "embedding", page, PAGE_SIZE);
         if (currentRequest !== requestId.current) return;
         setSearchResults(results);
@@ -76,7 +76,7 @@ export default function Home() {
         setCurrentPage(resultPage);
         setTotalResults(total);
         return;
-      } else if (vectorSearch) {
+      } else if (modes.vectorSearch) {
         const { results, total, page: resultPage } = await vectorSearchTypesense<MaterialHit>("materiale", await getEmbedding(value), "embedding", page, PAGE_SIZE);
         if (currentRequest !== requestId.current) return;
         setSearchResults(results);
@@ -240,19 +240,19 @@ export default function Home() {
   };
 
   const handleToggleVectorSearch = (enabled: boolean) => {
+    const nextTextSearch = !enabled || textSearch;
     setVectorSearch(enabled);
-
-    if (!enabled && !textSearch) {
-      setTextSearch(true);
-    }
+    setTextSearch(nextTextSearch);
+    setCurrentPage(1);
+    void performSearch(query, 1, { vectorSearch: enabled, textSearch: nextTextSearch });
   };
 
   const handleToggleTextSearch = (enabled: boolean) => {
+    const nextVectorSearch = !enabled || vectorSearch;
     setTextSearch(enabled);
-
-    if (!enabled && !vectorSearch) {
-      setVectorSearch(true);
-    }
+    setVectorSearch(nextVectorSearch);
+    setCurrentPage(1);
+    void performSearch(query, 1, { vectorSearch: nextVectorSearch, textSearch: enabled });
   };
 
   return (
@@ -291,10 +291,10 @@ export default function Home() {
           </Slider>
         )}
         <ToggleButton
-          aria-label="Toggle Vector Search" className="size-12 rounded-full" isSelected={textSearch} onChange={(selected) => handleToggleTextSearch(selected)}
+          aria-label="Căutare text" className="size-12 rounded-full" isSelected={textSearch} onChange={(selected) => handleToggleTextSearch(selected)}
         ><TextSearch className="size-5" /></ToggleButton>
         <ToggleButton
-          aria-label="Toggle Vector Search" className="size-12 rounded-full" isSelected={vectorSearch} onChange={(selected) => handleToggleVectorSearch(selected)}
+          aria-label="Căutare vectorială" className="size-12 rounded-full" isSelected={vectorSearch} onChange={(selected) => handleToggleVectorSearch(selected)}
         ><VectorPolygon className="size-5" /></ToggleButton>
         <Button type="submit" isIconOnly aria-label="Caută" isDisabled={!query.trim() || isSearching} className="size-12 rounded-full">
           {isSearching ? <Spinner size="sm" /> : <Search className="size-5" />}
@@ -304,7 +304,7 @@ export default function Home() {
       <section aria-label="Rezultate" aria-busy={isSearching}>
         <div role="status" aria-live="polite">
           {isSearching && <div className="flex items-center justify-center gap-3 py-16 text-muted"><Spinner size="sm" />Se caută materiale...</div>}
-          {searchedQuery && <div className="mb-5 flex flex-wrap items-center gap-3"><h2 className="min-w-0 break-words text-lg font-medium">Rezultate pentru „{searchedQuery}"</h2><Chip variant="soft">{totalResults}</Chip></div>}
+          {searchedQuery && <div className="mb-5 flex flex-wrap items-center gap-3"><h2 className="min-w-0 break-words text-lg font-medium">Rezultate pentru „{searchedQuery}”</h2><Chip variant="soft">{totalResults}</Chip></div>}
         </div>
 
         {!isSearching && searchResults.length === 0 && (

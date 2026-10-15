@@ -81,7 +81,8 @@ export async function vectorSearchTypesense<T extends object>(
   embedding: number[],
   vectorField: string = "embedding",
   page: number = 1,
-  perPage: number = 100
+  perPage: number = 100,
+  throwOnError: boolean = false
 ): Promise<{ results: (T & { distance?: number })[]; total: number; page: number; perPage: number }> {
     
     try {
@@ -111,11 +112,13 @@ export async function vectorSearchTypesense<T extends object>(
       const results: any = response.results[0];
       
       if (!results) {
+        if (throwOnError) throw new Error("Missing vector search response");
         console.error("No results in response:", response);
         return { results: [], total: 0, page, perPage };
       }
 
       if (results.error) {
+        if (throwOnError) throw new Error("Vector search failed");
         console.error("Typesense error:", results.error);
         return { results: [], total: 0, page, perPage };
       }
@@ -138,6 +141,7 @@ export async function vectorSearchTypesense<T extends object>(
         perPage
       };
     } catch (error) {
+      if (throwOnError) throw error;
       console.error("Vector search error:", error);
       return { results: [], total: 0, page, perPage };
     }
@@ -150,7 +154,8 @@ export async function hybridSearchTypesense<T extends object>(
   alpha: number,
   vectorField: string = "embedding",
   page: number = 1,
-  perPage: number = 100
+  perPage: number = 100,
+  throwOnError: boolean = false
 ): Promise<{ results: (T & { distance?: number })[]; total: number; page: number; perPage: number }> {
     
     try {
@@ -180,6 +185,7 @@ export async function hybridSearchTypesense<T extends object>(
       const results: any = response.results[0];
       
       if (!results || results.error) {
+        if (throwOnError) throw new Error("Hybrid search failed");
         return { results: [], total: 0, page, perPage };
       }
       
@@ -206,6 +212,7 @@ export async function hybridSearchTypesense<T extends object>(
         perPage
       };
     } catch (error) {
+      if (throwOnError) throw error;
       console.error("Vector search error:", error);
       return { results: [], total: 0, page, perPage };
     }

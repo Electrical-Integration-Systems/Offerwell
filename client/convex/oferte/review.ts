@@ -1,4 +1,8 @@
 import type { Doc } from "../_generated/dataModel";
+import { salePrice } from "../material_prices";
+import { flowError, structureError } from "./errors";
+import { normalizeMaterialDescription } from "../lib/material_description";
+import { isCurrentExcelOutput } from "./export_format";
 
 export type MatchedMaterial = NonNullable<Doc<"oferte">["materialePotrivite"]>[number];
 
@@ -12,7 +16,7 @@ function normalizeToken(value: string) {
 }
 
 function tokenize(value: string) {
-  return value.match(/[\p{L}\p{N}]+/gu)?.map(normalizeToken) ?? [];
+  return normalizeMaterialDescription(value).match(/[\p{L}\p{N}]+/gu)?.map(normalizeToken) ?? [];
 }
 
 function editDistance(first: string, second: string) {
@@ -31,7 +35,7 @@ function editDistance(first: string, second: string) {
   return previous[second.length];
 }
 
-function inferMatchedTokens(query: string, matchedDescription: string) {
+export function inferMatchedTokens(query: string, matchedDescription: string) {
   const availableMatches = tokenize(matchedDescription);
   return tokenize(query).flatMap((queryToken) => {
     let closestIndex = -1;
@@ -43,7 +47,7 @@ function inferMatchedTokens(query: string, matchedDescription: string) {
         closestIndex = index;
       }
     });
-    const allowedTypos = queryToken.length >= 7 ? 2 : queryToken.length >= 4 ? 1 : 0;
+    const allowedTypos = /^\d+$/.test(queryToken) ? 0 : queryToken.length >= 7 ? 2 : queryToken.length >= 4 ? 1 : 0;
     return closestIndex >= 0 && closestDistance <= allowedTypos
       ? availableMatches.splice(closestIndex, 1)
       : [];
@@ -80,24 +84,26 @@ export function calculateMatchQuality(query: string, tokensMatched: number, matc
 }
 
 export function normalizeMatchScore(material: Pick<MatchedMaterial, "descriereOriginala" | "descriereGasita" | "matchScore" | "matchedTokens">) {
-  if (Number.isFinite(material.matchScore) && material.matchScore >= 1 && material.matchScore <= 10) {
-    return material.matchScore;
-  }
-  const matchedTokens = material.matchedTokens?.length
-    ? material.matchedTokens
-    : inferMatchedTokens(material.descriereOriginala, material.descriereGasita);
+  // Hybrid vector hits can omit text-match metadata, even for identical descriptions.
+  const matchedTokens = inferMatchedTokens(material.descriereOriginala, material.descriereGasita);
   return calculateMatchQuality(material.descriereOriginala, matchedTokens.length, matchedTokens);
 }
 
+export function normalizeMaterial<T extends MatchedMaterial>(material: T): T {
+  const matchedTokens = inferMatchedTokens(material.descriereOriginala, material.descriereGasita);
+  return { ...material, pretVanzare: salePrice(material),
+    matchScore: calculateMatchQuality(material.descriereOriginala, matchedTokens.length, matchedTokens), matchedTokens };
+}
+
 export function isExactMatch(original: string, matched: string): boolean {
-  const normalize = (value: string) => value.trim().toLowerCase().replace(/\s+/g, " ");
+  const normalize = (value: string) => normalizeMaterialDescription(value).toLowerCase();
   return normalize(original) !== "" && normalize(original) === normalize(matched);
 }
 
 export function hasValidPrices(material: Pick<MatchedMaterial, "cantitate" | "pretAchizitie" | "pretVanzare" | "manopera">): boolean {
   return [material.cantitate, material.pretAchizitie, material.pretVanzare, material.manopera]
     .every((value) => Number.isFinite(value) && value >= 0)
-    && Number.isFinite(material.cantitate * (material.pretVanzare + material.manopera))
+    && Number.isFinite(material.cantitate * (salePrice(material) + material.manopera))
     && Number.isFinite(material.cantitate * material.pretAchizitie);
 }
 
@@ -107,30 +113,31 @@ export function needsReview(material: MatchedMaterial): boolean {
 }
 
 export function materialTotal(material: MatchedMaterial) {
-  const total = material.cantitate * (material.pretVanzare + material.manopera);
+  const total = material.cantitate * (salePrice(material) + material.manopera);
   return Number.isFinite(total) && total >= 0 ? total : 0;
 }
 
 export function summarizeMaterials(materials: MatchedMaterial[]) {
-  return { materialCount: materials.length, pendingCount: materials.filter(needsReview).length,
+  return { pricingVersion: 1, materialCount: materials.length, pendingCount: materials.filter(needsReview).length,
     total: materials.reduce((total, material) => total + materialTotal(material), 0) };
 }
 
-export function getOfferProgress(oferta: Pick<Doc<"oferte">, "excelMapping" | "materialeExtrase" | "materialePotrivite" | "excelOutput" | "materialSummary">) {
+export function getOfferProgress(oferta: Pick<Doc<"oferte">, "excelMapping" | "selectedSheets" | "sheetMappings" | "materialeExtrase" | "materialePotrivite" | "excelOutput" | "materialSummary">) {
   const materialCount = oferta.materialSummary?.materialCount ?? oferta.materialePotrivite?.length ?? oferta.materialeExtrase?.length ?? 0;
   const pendingCount = oferta.materialSummary?.pendingCount ?? oferta.materialePotrivite?.filter(needsReview).length ?? 0;
-  const status = !oferta.excelMapping ? "analysis" 
-    : !oferta.materialeExtrase?.length ? "extraction"
-    : !(oferta.materialSummary?.materialCount ?? oferta.materialePotrivite?.length) ? "matching"
+  const hasMappings = Boolean(oferta.excelMapping) && !oferta.selectedSheets?.some((name) => !oferta.sheetMappings?.some((entry) => entry.sheetName === name));
+  const status = !hasMappings ? "analysis"
+    : !oferta.materialeExtrase?.length && !oferta.materialSummary ? "extraction"
+    : !oferta.materialSummary && !oferta.materialePotrivite?.length ? "matching"
     : pendingCount > 0 ? "validation"
-    : oferta.excelOutput ? "completed" : "export";
+    : isCurrentExcelOutput(oferta.excelOutput) ? "completed" : "export";
   return { status, materialCount, pendingCount } as const;
 }
 
 export function assertReadyForExport(materials: MatchedMaterial[] | undefined): asserts materials is MatchedMaterial[] {
-  if (!materials?.length) throw new Error("Nu exista materiale de exportat.");
-  if (materials.some(needsReview)) throw new Error("Valideaza toate materialele marcate inainte de export.");
-  if (!Number.isFinite(materials.reduce((total, material) => total + material.cantitate * (material.pretVanzare + material.manopera), 0))) {
-    throw new Error("Totalul ofertei este prea mare.");
+  if (!materials?.length) throw structureError();
+  if (materials.some(needsReview)) throw flowError("VALIDATION", "Valideaza toate materialele marcate înainte de export. Folosește filtrul pentru materiale nevalidate.");
+  if (!Number.isFinite(materials.reduce((total, material) => total + material.cantitate * (salePrice(material) + material.manopera), 0))) {
+    throw flowError("VALIDATION", "Totalul ofertei este prea mare. Verifică și corectează cantitățile și prețurile materialelor.");
   }
 }

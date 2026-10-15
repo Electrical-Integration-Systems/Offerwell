@@ -2,6 +2,7 @@ import { choice, TypeSafeClient } from "@typesafe-ai/sdk";
 import { type Material } from "./types";
 import { action } from "./_generated/server";
 import { v } from "convex/values";
+import { NO_MATERIAL_MATCH } from "./oferte/matching";
 
 const client = new TypeSafeClient();
 
@@ -21,6 +22,7 @@ export const alegePret = async (
       `pretAchizitie=${ref.pretAchizitie}, pretVanzare=${ref.pretVanzare}, manopera=${ref.manopera}`,
     ])
   );
+  options[NO_MATERIAL_MATCH] = "Niciun material nu se potrivește. Nu există o referință compatibilă în lista de materiale propuse.";
 
   return await client.systemOne({
     state: {
@@ -32,6 +34,8 @@ export const alegePret = async (
   
         Alege referința care corespunde cel mai bine acestui material.
         Compară denumirea materialului și caracteristicile tehnice.
+        Dacă niciuna dintre referințe nu corespunde materialului și caracteristicilor sale tehnice, alege ${NO_MATERIAL_MATCH}.
+        Nu forța o potrivire cu un material diferit doar pentru că este cel mai apropiat din listă.
         Nu lua în considerare prețul pentru a decide care material este similar.`,
         options
       ),

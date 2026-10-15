@@ -1,18 +1,37 @@
 "use client";
 
-import { useEffect, useRef, useState, type DragEvent } from "react";
+import { useEffect, useRef, useState, type DragEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAction, useConvex, useConvexAuth, useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { CursorPagination, PAGE_SIZE, useCursorPagination } from "./cursor-pagination";
 import GradientText from "@/components/react-bits/GradientText";
-import { Sparkles, UploadCloud, Check, Pencil, Trash, Sheet, Download, RotateCcw, CircleAlert, ArrowLeft, Eye } from "lucide-react";
+import { Sparkles, UploadCloud, Check, Pencil, Trash, Sheet, Download, CircleAlert, ArrowLeft, Eye, Replace, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Table, Button, Input, Spinner, Tooltip, NumberField, Label, Checkbox, Drawer, Fieldset, FieldGroup, FieldError, toast } from "@heroui/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { EXCEL_MIME_TYPE, MAX_EXCEL_BYTES, hasValidPrices, needsReview, type MatchedMaterial } from "../../convex/oferte/review";
+import { salePrice, SALE_PRICE_MULTIPLIER } from "../../convex/material_prices";
+import { convertEuroAmount, euroConversionRate, type OfferCurrency } from "../../convex/oferte/currency";
+import ManualExcelMapping from "./manual-excel-mapping";
+import type { ExcelMapping } from "../../convex/oferte/mapping";
+import { flowError, getFlowError, type FlowError, type FlowStage } from "../../convex/oferte/errors";
+import OfertaFlowError from "./oferta-flow-error";
+import ExpandableText from "./expandable-text";
+import ExcelSheetSelect from "./excel-sheet-select";
+import ReplaceOfferMaterial from "./replace-offer-material";
 
-function ExcelDropzone({ file, disabled, onFileSelected, onAnalyze }: {
+type PriceSortField = "pretAchizitie" | "pretVanzare" | "manopera" | "cantitate" | "matchScore" | "totalVanzareManopera";
+type PriceSort = { field: PriceSortField; direction: "asc" | "desc" };
+type MaterialTableActions = {
+  sort: PriceSort | null;
+  onSort: (field: PriceSortField) => void;
+  onReplace: (material: MatchedMaterial) => void;
+};
+
+function ExcelDropzone({ file, disabled, onFileSelected, onAnalyze, children, canAnalyze = true }: {
+  children?: ReactNode;
+  canAnalyze?: boolean;
   file: File | null;
   disabled: boolean;
   onFileSelected: (file: File | null) => void;
@@ -101,6 +120,7 @@ function ExcelDropzone({ file, disabled, onFileSelected, onAnalyze }: {
         />
       </div>
       {error && <p role="alert" className="mt-2 text-sm text-danger">{error}</p>}
+      {children}
       {file && (
         <div className="mt-2 flex gap-2 justify-center items-center flex-wrap">
           <Button
@@ -118,7 +138,7 @@ function ExcelDropzone({ file, disabled, onFileSelected, onAnalyze }: {
           </Button>
           {onAnalyze && (
             <Button
-              isDisabled={disabled}
+              isDisabled={disabled || !canAnalyze}
               onPress={onAnalyze}
               size="sm"
             >
@@ -137,7 +157,7 @@ const priceFields = [
   { name: "pretVanzare", label: "Preț vânzare / UM" },
   { name: "manopera", label: "Manoperă / UM" },
 ] as const;
-type MaterialEdit = Pick<MatchedMaterial, "rand" | "cantitate" | "pretAchizitie" | "pretVanzare" | "manopera">;
+type MaterialEdit = Pick<MatchedMaterial, "sheetName" | "rand" | "cantitate" | "pretAchizitie" | "pretVanzare" | "manopera">;
 const steps = ["Upload", "Analiză Excel", "Extragere", "Prețuri", "Validare", "Export"];
 
 function HighlightedDescription({ text, matchedTokens = [] }: { text: string; matchedTokens?: string[] }) {
@@ -145,45 +165,59 @@ function HighlightedDescription({ text, matchedTokens = [] }: { text: string; ma
   const matches = new Set(matchedTokens.map(normalize));
 
   return (
-    <p className="font-medium">
+    <ExpandableText text={text}><span className="font-medium">
       {text.split(/([\p{L}\p{N}]+)/gu).map((part, index) => matches.has(normalize(part))
         ? <mark key={index} className="rounded-sm bg-warning/30 px-0.5 text-foreground">{part}</mark>
         : part)}
-    </p>
+    </span></ExpandableText>
   );
 }
 
-function MaterialeTable({ materiale, currency, busy, editing, setEditing, onValidate, conversionRate, displayCurrency, displayCurrencyFormatter }: {
+function MaterialeTable({ materiale, busy, editing, setEditing, onValidate, onDelete, onReplace, sort, onSort, conversionRate, displayCurrency, displayCurrencyFormatter }: MaterialTableActions & {
   materiale: MatchedMaterial[];
-  currency: Intl.NumberFormat;
   busy: boolean;
   editing: MaterialEdit | null;
   setEditing: (material: MatchedMaterial) => void;
   onValidate: (material: MaterialEdit) => Promise<void>;
-  conversionRate: number;
+  onDelete: (material: MatchedMaterial) => Promise<void>;
+  conversionRate: number | null;
   displayCurrency: "EUR" | "RON";
   displayCurrencyFormatter: Intl.NumberFormat;
 }) {
   const displayMultiplier = displayCurrency === "EUR" ? 1 : conversionRate;
+  const formatPrice = (price: number) => displayMultiplier === null ? "—" : displayCurrencyFormatter.format(price * displayMultiplier);
+  const quantityFormatter = new Intl.NumberFormat("ro-RO", { maximumFractionDigits: 20 });
   return (
     <Table>
       <Table.ScrollContainer className="max-w-full">
         <Table.Content aria-label="Materiale și prețuri finale" className="min-w-[1060px]">
           <Table.Header>
             <Table.Column isRowHeader>Material / Potrivire catalog</Table.Column>
-            <Table.Column className="text-right">Achiziție / UM</Table.Column>
-            <Table.Column className="text-right">Vânzare / UM</Table.Column>
-            <Table.Column className="text-right">Manoperă / UM</Table.Column>
-            <Table.Column>Validare</Table.Column>
+            {([
+              { field: "cantitate", label: "Cantitate" },
+              { field: "pretAchizitie", label: "Achiziție / UM" },
+              { field: "pretVanzare", label: "Vânzare / UM" },
+              { field: "manopera", label: "Manoperă / UM" },
+              { field: "totalVanzareManopera", label: "Total vânzare + manoperă" },
+              { field: "matchScore", label: "Validare / Calitate" },
+            ] as const).map(({ field, label }) => (
+              <Table.Column key={field} className="text-right" aria-sort={sort?.field === field ? sort.direction === "asc" ? "ascending" : "descending" : "none"}>
+                <button type="button" disabled={busy || editing !== null} onClick={() => onSort(field)}
+                  className="ml-auto flex cursor-pointer items-center gap-1 rounded focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50"
+                  aria-label={`Sortează după ${label.toLowerCase()}, ${sort?.field === field && sort.direction === "asc" ? "descrescător" : "crescător"}`}>
+                  {label}{sort?.field !== field ? <ArrowUpDown className="size-3" /> : sort.direction === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />}
+                </button>
+              </Table.Column>
+            ))}
             <Table.Column className="text-right">Acțiuni</Table.Column>
           </Table.Header>
           <Table.Body>
             {materiale.map((material) => (
-              <Table.Row key={material.rand} id={material.rand} className={needsReview(material) ? "bg-warning/5" : ""}>
+              <Table.Row key={JSON.stringify([material.sheetName, material.rand])} id={JSON.stringify([material.sheetName, material.rand])} className={needsReview(material) ? "bg-warning/5" : ""}>
                 <Table.Cell className="min-w-64 max-w-80 whitespace-normal break-words">
                   <div className="mb-2 flex items-center justify-between">
                   <p className="mb-1 text-xs text-muted-foreground">Rând {material.rand}</p>
-                  <Tooltip delay={50}>
+                  <div className="flex items-center gap-2"><Tooltip delay={50}>
                     <Tooltip.Trigger>
                         <Eye className="size-5 cursor-pointer" />
                     </Tooltip.Trigger>
@@ -192,12 +226,23 @@ function MaterialeTable({ materiale, currency, busy, editing, setEditing, onVali
                       <Tooltip.Arrow />
                     </Tooltip.Content>
                   </Tooltip>
+                  <Tooltip>
+                    <Button isIconOnly size="sm" variant="tertiary" aria-label={`Schimbă materialul asociat rândului ${material.rand}`}
+                      isDisabled={busy || editing !== null} onPress={() => onReplace(material)}><Replace className="size-4" /></Button>
+                    <Tooltip.Content>Schimbă materialul asociat</Tooltip.Content>
+                  </Tooltip></div>
                   </div>
                   <HighlightedDescription text={material.descriereOriginala} matchedTokens={material.matchedTokens} />
+                  {material.descriereGasita === "Eroare la căutare" && <p className="mt-2 text-xs text-warning">Prețurile nu au putut fi căutate. Completează-le manual și validează rândul.</p>}
+                  {material.descriereGasita === "Nu a fost găsit în baza de date" && <p className="mt-2 text-xs text-warning">Material negăsit în catalog. Alege manual un material sau completează prețurile.</p>}
                 </Table.Cell>
-                <Table.Cell className="text-right tabular-nums">{displayCurrencyFormatter.format(material.pretAchizitie * displayMultiplier)}</Table.Cell>
-                <Table.Cell className="text-right tabular-nums">{displayCurrencyFormatter.format(material.pretVanzare * displayMultiplier)}</Table.Cell>
-                <Table.Cell className="text-right tabular-nums">{displayCurrencyFormatter.format(material.manopera * displayMultiplier)}</Table.Cell>
+                <Table.Cell className="text-right tabular-nums whitespace-nowrap">
+                  {quantityFormatter.format(material.cantitate)} {material.unitate}
+                </Table.Cell>
+                <Table.Cell className="text-right tabular-nums">{formatPrice(material.pretAchizitie)}</Table.Cell>
+                <Table.Cell className="text-right tabular-nums">{formatPrice(material.pretVanzare)}</Table.Cell>
+                <Table.Cell className="text-right tabular-nums">{formatPrice(material.manopera)}</Table.Cell>
+                <Table.Cell className="text-right font-semibold whitespace-nowrap tabular-nums">{formatPrice(material.cantitate * (salePrice(material) + material.manopera))}</Table.Cell>
                 <Table.Cell>
                   <span className={`flex items-center gap-1.5 whitespace-nowrap text-xs font-medium ${needsReview(material) ? "text-warning" : "text-success"}`}>
                     {needsReview(material) ? <CircleAlert className="size-4 shrink-0" /> : <Check className="size-4 shrink-0" />}
@@ -220,6 +265,11 @@ function MaterialeTable({ materiale, currency, busy, editing, setEditing, onVali
                         onPress={() => { void onValidate(material); }}><Check className="size-4" /></Button>
                       <Tooltip.Content>Confirmă materialul și prețurile</Tooltip.Content>
                     </Tooltip>
+                    <Tooltip>
+                      <Button isIconOnly size="sm" variant="secondary" className="text-danger" aria-label={`Șterge materialul de pe rândul ${material.rand}`}
+                        isDisabled={busy || editing !== null} onPress={() => { void onDelete(material); }}><Trash className="size-4" /></Button>
+                      <Tooltip.Content>Șterge materialul din ofertă</Tooltip.Content>
+                    </Tooltip>
                   </div>
                 </Table.Cell>
               </Table.Row>
@@ -234,48 +284,39 @@ function MaterialeTable({ materiale, currency, busy, editing, setEditing, onVali
 function PrepareMaterialPages({ idGenerare }: { idGenerare: Id<"oferte"> }) {
   const prepare = useMutation(api.oferte.mutations.prepareMaterialPagination);
   const [attempt, setAttempt] = useState(0);
-  const [isRetrying, setIsRetrying] = useState(false);
+  const [error, setError] = useState<FlowError | null>(null);
   useEffect(() => {
     let cancelled = false;
     void prepare({ idGenerare }).catch((caught: unknown) => {
       if (!cancelled) {
-        const message = caught instanceof Error ? caught.message : "Pregatirea materialelor a esuat.";
-        const id = toast.danger(message, {
-          actionProps: {
-            children: "Încearcă din nou",
-            onPress: () => {
-              toast.close(id);
-              setIsRetrying(true);
-              setAttempt((value) => value + 1);
-              setTimeout(() => setIsRetrying(false), 500);
-            }
-          }
-        });
+        setError(getFlowError(caught, "load"));
       }
     });
     return () => { cancelled = true; };
   }, [idGenerare, prepare, attempt]);
-  return <p role="status" className="flex items-center gap-2 py-4"><Spinner size="sm" />Se pregatesc materialele...</p>;
+  return error ? <OfertaFlowError error={error} onRetry={() => { setError(null); setAttempt((value) => value + 1); }} />
+    : <p role="status" className="flex items-center gap-2 py-4"><Spinner size="sm" />Se pregătesc materialele...</p>;
 }
 
-function MaterialePages({ idGenerare, pendingOnly, currency, busy, editing, setEditing, onValidate, conversionRate, displayCurrency, displayCurrencyFormatter }: {
+function MaterialePages({ idGenerare, sheetName, pendingOnly, busy, editing, setEditing, onValidate, onDelete, onReplace, sort, onSort, conversionRate, displayCurrency, displayCurrencyFormatter }: MaterialTableActions & {
+  sheetName?: string;
   idGenerare: Id<"oferte">;
   pendingOnly: boolean;
-  currency: Intl.NumberFormat;
   busy: boolean;
   editing: MaterialEdit | null;
   setEditing: (material: MatchedMaterial) => void;
   onValidate: (material: MaterialEdit) => Promise<void>;
-  conversionRate: number;
+  onDelete: (material: MatchedMaterial) => Promise<void>;
+  conversionRate: number | null;
   displayCurrency: "EUR" | "RON";
   displayCurrencyFormatter: Intl.NumberFormat;
 }) {
   const { results, status, loadMore } = usePaginatedQuery(api.oferte.queries.listMateriale,
-    { idGenerare, pendingOnly }, { initialNumItems: PAGE_SIZE });
+    { idGenerare, pendingOnly, sheetName, sortBy: sort?.field, sortDirection: sort?.direction }, { initialNumItems: PAGE_SIZE });
   const pagination = useCursorPagination(results, status, loadMore);
   return <>
     {pagination.loading && pagination.items.length === 0 ? <p role="status" className="flex items-center gap-2 py-8 justify-center"><Spinner size="sm" />Se incarca materialele...</p> : (
-      <MaterialeTable materiale={pagination.items} currency={currency} busy={busy || pagination.loading} editing={editing} setEditing={setEditing} onValidate={onValidate} conversionRate={conversionRate} displayCurrency={displayCurrency} displayCurrencyFormatter={displayCurrencyFormatter} />
+      <MaterialeTable materiale={pagination.items} busy={busy || pagination.loading} editing={editing} setEditing={setEditing} onValidate={onValidate} onDelete={onDelete} onReplace={onReplace} sort={sort} onSort={onSort} conversionRate={conversionRate} displayCurrency={displayCurrency} displayCurrencyFormatter={displayCurrencyFormatter} />
     )}
     <CursorPagination {...pagination} disabled={busy || editing !== null} />
   </>;
@@ -284,87 +325,121 @@ function MaterialePages({ idGenerare, pendingOnly, currency, busy, editing, setE
 export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: string; detail?: boolean }) {
   const router = useRouter();
   const convex = useConvex();
-  const { isAuthenticated } = useConvexAuth();
+  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const oferta = useQuery(api.oferte.queries.getOfertaPage, idOferta && isAuthenticated ? { idOferta } : "skip");
   const idGenerare = oferta?._id ?? null;
-  const exchangeRate = useQuery(api.oferte.queries.getExchangeRate, oferta?.excelMapping?.valuta && oferta.excelMapping.valuta !== "EUR" ? { moneda: "EUR" } : "skip");
+  const exchangeRate = useQuery(api.oferte.queries.getExchangeRate, oferta?.hasMatched ? { moneda: "EUR" } : "skip");
   const generateUploadUrl = useMutation(api.oferte.mutations.generateUploadUrl);
   const uploadInputExcel = useMutation(api.oferte.mutations.uploadInputExcel);
   const analizaExcel = useAction(api.oferte.actions.analizaExcelInput);
+  const salveazaStructuraExcel = useAction(api.oferte.actions.salveazaStructuraExcel);
   const extrageMateriale = useAction(api.oferte.actions.extrageMateriale);
   const cautaPreturi = useAction(api.oferte.actions.cautaSiPopuleazaPreturi);
   const valideazaMaterial = useMutation(api.oferte.mutations.valideazaMaterial);
+  const stergeMaterial = useMutation(api.oferte.mutations.stergeMaterial);
   const genereazaExcel = useAction(api.oferte.actions.genereazaExcelOutput);
   const materialCount = oferta?.materialCount ?? 0;
   const pendingCount = oferta?.pendingCount ?? 0;
-  const baseValuta = oferta?.excelMapping?.valuta || "RON";
+  const [sheetChoice, setSheetChoice] = useState<string | null>(null);
+  const activeSheet = oferta?.selectedSheets?.includes(sheetChoice ?? "") ? sheetChoice! : oferta?.selectedSheets?.[0];
+  const activeMapping = oferta?.sheetMappings?.find((entry) => entry.sheetName === activeSheet)?.mapping ?? (!oferta?.selectedSheets ? oferta?.excelMapping : undefined);
+  const baseValuta = activeMapping?.valuta || "RON";
   const [excelFile, setExcelFile] = useState<File | null>(null);
+  const [fileSheets, setFileSheets] = useState<string[]>([]);
+  const [selectedSheets, setSelectedSheets] = useState<string[]>([]);
+  const [readingSheets, setReadingSheets] = useState(false);
+  const [fileError, setFileError] = useState("");
   const [activeStep, setActiveStep] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<MaterialEdit | null>(null);
+  const [failedDeletion, setFailedDeletion] = useState<MatchedMaterial | null>(null);
+  const [replacing, setReplacing] = useState<MatchedMaterial | null>(null);
+  const [priceSort, setPriceSort] = useState<PriceSort | null>(null);
+  const changeSort = (field: PriceSortField) => setPriceSort((previous) => ({ field, direction: previous?.field === field && previous.direction === "asc" ? "desc" : "asc" }));
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [onlyPending, setOnlyPending] = useState(false);
-  const [displayCurrency, setDisplayCurrency] = useState<"EUR" | "RON">("RON");
+  const [manualMappingOffer, setManualMappingOffer] = useState<string | null>(null);
+  const [structureError, setStructureError] = useState<{ offerId: string; message: string } | null>(null);
+  const [operationError, setOperationError] = useState<{ error: FlowError; stage: FlowStage } | null>(null);
+  const [matchingWarning, setMatchingWarning] = useState<string | null>(null);
+  const [currencyChoice, setCurrencyChoice] = useState<{ offerKey: string; currency: OfferCurrency } | null>(null);
   const inFlight = useRef(false);
   const uploadedFile = useRef<Id<"_storage"> | null>(null);
   const currentOffer = useRef<Id<"oferte"> | null>(null);
   
-  useEffect(() => {
-    setDisplayCurrency(baseValuta === "EUR" ? "EUR" : "RON");
-  }, [baseValuta]);
-  const busy = activeStep !== null || saving;
-  const conversionRate = baseValuta !== "EUR" && exchangeRate ? exchangeRate : 1;
-  const currency = new Intl.NumberFormat("ro-RO", { style: "currency", currency: baseValuta });
-  const total = (oferta?.total ?? 0) * conversionRate;
-  const totalInEUR = (oferta?.total ?? 0);
-  const totalInRON = (oferta?.total ?? 0) * (exchangeRate || 1);
-  const displayedTotal = displayCurrency === "EUR" ? totalInEUR : totalInRON;
+  const offerKey = `${idGenerare}:${baseValuta}`;
+  const displayCurrency = currencyChoice?.offerKey === offerKey ? currencyChoice.currency : baseValuta === "EUR" ? "EUR" : "RON";
+  const conversionRate = euroConversionRate(displayCurrency, exchangeRate);
+  const eurToRonRate = euroConversionRate("RON", exchangeRate);
+  const busy = activeStep !== null || saving || replacing !== null || Boolean(idGenerare && manualMappingOffer === idGenerare) || (Boolean(oferta?.hasMatched) && conversionRate === null);
+  const displayedTotal = convertEuroAmount(oferta?.total ?? 0, displayCurrency, exchangeRate);
   const displayCurrencyFormatter = new Intl.NumberFormat("ro-RO", { style: "currency", currency: displayCurrency === "EUR" ? "EUR" : "RON" });
-  const completed = [Boolean(oferta), Boolean(oferta?.excelMapping), Boolean(oferta?.hasExtracted), Boolean(oferta?.hasMatched), Boolean(oferta?.hasMatched) && pendingCount === 0, Boolean(oferta?.excelOutput)];
+  const hasMappings = Boolean(oferta?.excelMapping) && !oferta?.selectedSheets?.some((name) => !oferta.sheetMappings?.some((entry) => entry.sheetName === name));
+  const showStructureCorrection = hasMappings && activeStep === null && !saving
+    && manualMappingOffer !== idGenerare && operationError?.error.recovery !== "structure";
+  const completed = [Boolean(oferta), hasMappings, Boolean(oferta?.hasExtracted), Boolean(oferta?.hasMatched), Boolean(oferta?.hasMatched) && pendingCount === 0, Boolean(oferta?.downloadUrl)];
 
-  const processFile = async () => {
+  const processFile = async (manualMapping?: ExcelMapping) => {
     if (inFlight.current || !isAuthenticated) return;
+    setOperationError(null);
+    setMatchingWarning(null);
     inFlight.current = true;
     setActiveStep(idGenerare ? 1 : 0);
+    let processingStep = idGenerare ? 1 : 0;
+    let offerId = idGenerare ?? currentOffer.current;
     try {
-      let offerId = idGenerare ?? currentOffer.current;
       if (!offerId) {
-        if (!excelFile) throw new Error("Selectează un fișier Excel.");
+        if (!excelFile) throw flowError("INVALID_FILE", "Selectează un fișier Excel.");
+        if (readingSheets || !selectedSheets.length) throw flowError("INVALID_FILE", "Selectează cel puțin o foaie cu materiale și cantități.");
         setActiveStep(0);
         if (!uploadedFile.current) {
           const uploadUrl = await generateUploadUrl({});
           const response = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": EXCEL_MIME_TYPE }, body: excelFile });
-          if (!response.ok) throw new Error("Uploadul a eșuat. Încearcă din nou.");
+          if (!response.ok) throw flowError("RETRY", "Fișierul nu a putut fi încărcat. Verifică conexiunea și încearcă din nou.");
           const uploaded: unknown = await response.json();
           if (!uploaded || typeof uploaded !== "object" || !("storageId" in uploaded) || typeof uploaded.storageId !== "string") {
-            throw new Error("Răspuns invalid la upload.");
+            throw flowError("RETRY", "Încărcarea fișierului nu a fost confirmată. Încearcă din nou.");
           }
           uploadedFile.current = uploaded.storageId as Id<"_storage">;
         }
-        offerId = await uploadInputExcel({ storageId: uploadedFile.current, fileName: excelFile.name });
+        offerId = await uploadInputExcel({ storageId: uploadedFile.current, fileName: excelFile.name, selectedSheets });
         currentOffer.current = offerId;
         router.replace(`/generare-ai?oferta=${encodeURIComponent(offerId)}`, { scroll: false });
       }
-      const existing = await convex.query(api.oferte.queries.getOferta, { idGenerare: offerId });
-      if (!existing.excelMapping) {
+      let existing = await convex.query(api.oferte.queries.getOferta, { idGenerare: offerId });
+      setStructureError(null);
+      if (manualMapping) {
+        processingStep = 1;
+        setActiveStep(1);
+        await salveazaStructuraExcel({ idGenerare: offerId, expectedRevision: existing.revision, excelMapping: manualMapping, sheetName: activeSheet });
+        existing = await convex.query(api.oferte.queries.getOferta, { idGenerare: offerId });
+      }
+      if (!existing.excelMapping || existing.selectedSheets?.some((name) => !existing.sheetMappings?.some((entry) => entry.sheetName === name))) {
+        processingStep = 1;
         setActiveStep(1);
         await analizaExcel({ idGenerare: offerId });
       }
-      if (!existing.hasExtracted) {
+      if (!existing.hasExtracted && !existing.hasMatched) {
+        processingStep = 2;
         setActiveStep(2);
         await extrageMateriale({ idGenerare: offerId });
       }
+      setManualMappingOffer(null);
       if (!existing.hasMatched) {
+        processingStep = 3;
         setActiveStep(3);
-        await cautaPreturi({ idGenerare: offerId });
+        const result = await cautaPreturi({ idGenerare: offerId });
+        if (result.failedCount) setMatchingWarning(`Prețurile nu au putut fi căutate pentru ${result.failedCount} materiale. Verifică rândurile marcate „Eroare la căutare” și completează manual prețurile înainte de validare.`);
       }
     } catch (caught) {
-      const id = toast.danger(caught instanceof Error ? caught.message : "Procesarea a eșuat. Încearcă din nou.", {
-        actionProps: {
-          children: "Dismiss",
-          onPress: () => toast.close(id)
-        }
-      });
+      const stage: FlowStage = processingStep === 0 ? "upload" : processingStep === 1 ? "analysis" : processingStep === 2 ? "extraction" : "matching";
+      const error = getFlowError(caught, stage);
+      setOperationError({ error, stage });
+      if (offerId && error.recovery === "structure") {
+        if (error.sheetName) setSheetChoice(error.sheetName);
+        setStructureError({ offerId, message: error.message });
+        setManualMappingOffer(offerId);
+      }
     } finally {
       inFlight.current = false;
       setActiveStep(null);
@@ -375,8 +450,9 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
     if (!idGenerare || !oferta || inFlight.current) return;
     inFlight.current = true;
     setSaving(true);
+    setOperationError(null);
     try {
-      await valideazaMaterial({ idGenerare, expectedRevision: oferta.revision ?? 0, rand: material.rand,
+      await valideazaMaterial({ idGenerare, expectedRevision: oferta.revision ?? 0, rand: material.rand, sheetName: material.sheetName,
         cantitate: material.cantitate, pretAchizitie: material.pretAchizitie, pretVanzare: material.pretVanzare, manopera: material.manopera });
       setEditing(null);
       setIsDrawerOpen(false);
@@ -387,12 +463,25 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
         }
       });
     } catch (caught) {
-      const id = toast.danger(caught instanceof Error ? caught.message : "Validarea nu a putut fi salvată.", {
-        actionProps: {
-          children: "Dismiss",
-          onPress: () => toast.close(id)
-        }
-      });
+      setOperationError({ error: getFlowError(caught, "validation"), stage: "validation" });
+    } finally {
+      setSaving(false);
+      inFlight.current = false;
+    }
+  };
+
+  const deleteMaterial = async (material: MatchedMaterial) => {
+    if (!idGenerare || !oferta || inFlight.current || editing) return;
+    inFlight.current = true;
+    setSaving(true);
+    setOperationError(null);
+    try {
+      await stergeMaterial({ idGenerare, expectedRevision: oferta.revision, rand: material.rand, sheetName: material.sheetName });
+      setFailedDeletion(null);
+      toast.success("Material șters din ofertă.");
+    } catch (caught) {
+      setFailedDeletion(material);
+      setOperationError({ error: getFlowError(caught, "deletion"), stage: "deletion" });
     } finally {
       setSaving(false);
       inFlight.current = false;
@@ -408,6 +497,7 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
     if (!idGenerare || inFlight.current || editing || !oferta?.hasMatched || pendingCount) return;
     inFlight.current = true;
     setActiveStep(5);
+    setOperationError(null);
     try {
       await genereazaExcel({ idGenerare });
       const id = toast.success("Excel generat cu succes.", {
@@ -417,18 +507,21 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
         }
       });
     } catch (caught) {
-      const id = toast.danger(caught instanceof Error ? caught.message : "Exportul a eșuat. Încearcă din nou.", {
-        actionProps: {
-          children: "Dismiss",
-          onPress: () => toast.close(id)
-        }
-      });
+      const error = getFlowError(caught, "export");
+      setOperationError({ error, stage: "export" });
+      if (error.recovery === "structure") {
+        if (error.sheetName) setSheetChoice(error.sheetName);
+        setStructureError({ offerId: idGenerare, message: error.message });
+        setManualMappingOffer(idGenerare);
+      }
     } finally {
       inFlight.current = false;
       setActiveStep(null);
     }
   };
 
+  if (authLoading) return <main role="status" className="p-8 text-center">Se verifică autentificarea...</main>;
+  if (!isAuthenticated) return <main className="mx-auto max-w-5xl px-4 py-10"><OfertaFlowError error={getFlowError(flowError("AUTH", "Conectează-te pentru a genera sau relua o ofertă."), "load")} /></main>;
   if (idOferta && oferta === undefined) {
     return <main role="status" className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-10 justify-center"><Spinner size="sm" />Se încarcă oferta...</main>;
   }
@@ -440,7 +533,7 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
   }
 
   return (
-        <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-8 sm:py-14">
+        <main className="mx-auto w-full max-w-[1600px] px-4 py-10 sm:px-8 sm:py-14">
             <Link href="/oferte" className="mb-5 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" />Toate ofertele</Link>
             <div className="flex flex-row justify-between items-end mb-8 border-b border-border pb-6">
                 <div>
@@ -472,15 +565,105 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
             )}
             {idGenerare ? (
               null
-            ) : <ExcelDropzone file={excelFile} disabled={busy} onFileSelected={(file) => {
+            ) : <ExcelDropzone file={excelFile} disabled={busy || readingSheets} canAnalyze={selectedSheets.length > 0 && !fileError} onFileSelected={(file) => {
               uploadedFile.current = null;
               currentOffer.current = null;
               setExcelFile(file);
-            }} onAnalyze={() => { void processFile(); }} />}
+              setOperationError(null);
+              setFileSheets([]);
+              setSelectedSheets([]);
+              setFileError("");
+              if (!file) return;
+              setReadingSheets(true);
+              void (async () => {
+                try {
+                  const XLSX = await import("xlsx");
+                  const workbook = XLSX.read(await file.arrayBuffer(), { type: "array", bookSheets: true });
+                  if (!workbook.SheetNames.length) throw new Error("Fișierul nu conține foi Excel.");
+                  setFileSheets(workbook.SheetNames);
+                  setSelectedSheets(workbook.SheetNames.length === 1 ? workbook.SheetNames : []);
+                } catch {
+                  setFileError("Nu am putut citi foile. Selectează un fișier .xlsx valid.");
+                } finally {
+                  setReadingSheets(false);
+                }
+              })();
+            }} onAnalyze={() => { void processFile(); }}>
+              {readingSheets && <p role="status" className="mt-3 text-sm text-muted-foreground">Se citesc foile Excel...</p>}
+              {fileError && <p role="alert" className="mt-3 text-sm text-danger">{fileError}</p>}
+              {fileSheets.length > 1 && <fieldset className="my-4 rounded-xl border border-border p-4">
+                <legend className="px-1 text-sm font-semibold">Ce foi conțin materiale și cantități?</legend>
+                <p className="mb-3 text-sm text-muted-foreground">Selectează foile de analizat. Fiecare foaie va fi analizată separat.</p>
+                <div className="flex flex-wrap gap-3">
+                  {fileSheets.map((name) => <label key={name} className="flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
+                    <input type="checkbox" checked={selectedSheets.includes(name)} disabled={busy}
+                      onChange={(event) => setSelectedSheets((current) => event.target.checked ? fileSheets.filter((sheet) => sheet === name || current.includes(sheet)) : current.filter((sheet) => sheet !== name))} />
+                    {name}
+                  </label>)}
+                </div>
+                {!selectedSheets.length && <p className="mt-3 text-sm text-muted-foreground">Selectează cel puțin o foaie pentru a continua.</p>}
+              </fieldset>}
+            </ExcelDropzone>}
             <p role="status" className="mb-4 min-h-5 text-sm text-muted-foreground">
-              {activeStep !== null ? `${steps[activeStep]} în curs...` : saving ? "Se salvează validarea..." : ""}
+              {activeStep !== null ? `${steps[activeStep]} în curs...` : saving ? "Se salvează modificările..." : ""}
             </p>
-            {idGenerare && !oferta?.hasMatched && (
+            {activeStep === 3 && <div className="mb-6 rounded-xl border border-border bg-secondary/40 p-4">
+              <p role="status" aria-live="polite" className="mb-2 flex items-center gap-2 text-sm font-medium">
+                <Spinner size="sm" />
+                {oferta?.matchingProgress?.status === "running" || oferta?.matchingProgress?.status === "completed" ? oferta.matchingProgress.completed : 0}
+                {" din "}{oferta?.matchingProgress?.total ?? oferta?.extractedCount ?? 0} materiale procesate
+              </p>
+              <progress className="h-2 w-full accent-accent" aria-label="Progresul căutării potrivirilor"
+                value={oferta?.matchingProgress?.status === "running" || oferta?.matchingProgress?.status === "completed" ? oferta.matchingProgress.completed : 0}
+                max={Math.max(1, oferta?.matchingProgress?.total ?? oferta?.extractedCount ?? 0)} />
+              <p className="mt-2 text-xs text-muted-foreground">Se caută referințe și prețuri pentru fiecare material. Procesarea listelor mari poate dura câteva minute.</p>
+            </div>}
+            {operationError && !(operationError.error.recovery === "structure" && manualMappingOffer === idGenerare) && !(operationError.stage === "validation" && isDrawerOpen) && <OfertaFlowError
+              error={operationError.error} disabled={activeStep !== null || saving}
+              onRetry={() => {
+                if (operationError.stage === "export") void exportFile();
+                else if (operationError.stage === "deletion" && failedDeletion) void deleteMaterial(failedDeletion);
+                else if (operationError.stage === "validation" && editing) void validate(editing);
+                else void processFile();
+              }}
+              onStructure={idGenerare ? () => {
+                if (operationError.error.sheetName) setSheetChoice(operationError.error.sheetName);
+                setStructureError({ offerId: idGenerare, message: operationError.error.message });
+                setManualMappingOffer(idGenerare);
+              } : undefined}
+              onNewFile={() => {
+                uploadedFile.current = null;
+                currentOffer.current = null;
+                setExcelFile(null);
+                setFileSheets([]);
+                setSelectedSheets([]);
+                setFileError("");
+                setOperationError(null);
+                setManualMappingOffer(null);
+                setStructureError(null);
+              }} />}
+            {matchingWarning && <p role="alert" className="my-4 rounded-xl border border-warning/30 bg-warning/5 p-4 text-sm">{matchingWarning}</p>}
+            {idGenerare && (showStructureCorrection || (oferta?.selectedSheets?.length ?? 0) > 1) && <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+              {oferta?.selectedSheets && oferta.selectedSheets.length > 1 && <ExcelSheetSelect sheets={oferta.selectedSheets} value={activeSheet}
+                disabled={activeStep !== null || saving || editing !== null} onChange={setSheetChoice} />}
+              {showStructureCorrection && <div className="flex flex-1 flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-4">
+                <p className="text-sm text-muted-foreground">Coloanele au fost identificate greșit?</p>
+                <Button variant="secondary" isDisabled={activeStep !== null || saving || editing !== null} onPress={() => setManualMappingOffer(idGenerare)}>
+                  <Pencil className="size-4" aria-hidden="true" />Corectează structura Excelului
+                </Button>
+              </div>}
+            </div>}
+            {idGenerare && (
+              manualMappingOffer === idGenerare ? (
+                <div hidden={activeStep !== null}>
+                <ManualExcelMapping key={`${idGenerare}:${activeSheet}:${oferta?.revision ?? 0}`} initialMapping={activeMapping} sheetName={activeSheet}
+                  disabled={activeStep !== null || saving} hasResults={Boolean(oferta?.hasExtracted || oferta?.hasMatched)}
+                  error={structureError?.offerId === idGenerare ? structureError.message : undefined}
+                  onSubmit={processFile} onCancel={() => { setManualMappingOffer(null); setStructureError(null); }} />
+                </div>
+              ) : null
+            )}
+            {idGenerare && activeStep === null && !operationError && !oferta?.hasMatched && manualMappingOffer !== idGenerare && (
               <div className="flex justify-center">
                 <Button isDisabled={busy || !isAuthenticated || !oferta} onPress={() => { void processFile(); }}>
                   {busy ? <Spinner size="sm" /> : <Sparkles className="size-4" />}
@@ -489,6 +672,9 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
               </div>
             )}
             
+            {replacing && idGenerare && oferta && <ReplaceOfferMaterial
+              key={JSON.stringify([idGenerare, replacing.sheetName, replacing.rand])} material={replacing}
+              idGenerare={idGenerare} revision={oferta.revision} onClose={() => setReplacing(null)} />}
             <Drawer isOpen={isDrawerOpen} onOpenChange={(open) => {
               setIsDrawerOpen(open);
               if (!open) {
@@ -502,6 +688,9 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
                       <Drawer.Heading className="flex flex-row items-center gap-2 text-blue-500"><Pencil className="size-4 text-blue-500" aria-hidden="true" />Corectare material · Rând {editing?.rand}</Drawer.Heading>
                     </Drawer.Header>
                     <Drawer.Body>
+                      {operationError?.stage === "validation" && <OfertaFlowError error={operationError.error} disabled={saving}
+                        onRetry={editing ? () => { void validate(editing); } : undefined} />}
+                      {editing && !hasValidPrices(editing) && <p role="alert" className="mb-4 text-sm text-danger">Verifică toate câmpurile: cantitatea și prețurile trebuie să fie numere finite, pozitive sau zero.</p>}
                       <Fieldset className="w-full gap-6">
                         <FieldGroup className="gap-6 flex flex-col">
                           {priceFields.map(({ name, label }) => (
@@ -510,12 +699,19 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
                               isRequired 
                               minValue={0} 
                               step={0.01} 
-                              value={editing ? editing[name] * conversionRate : 0}
-                              isDisabled={saving} 
+                              value={editing ? editing[name] * (name === "cantitate" ? 1 : conversionRate ?? 1) : 0}
+                              isDisabled={saving || conversionRate === null}
                               formatOptions={{ maximumFractionDigits: 4 }}
-                              onChange={(value) => editing && setEditing({ ...editing, [name]: value / conversionRate })}
+                              onChange={(value) => {
+                                if (!editing || conversionRate === null) return;
+                                const updated = { ...editing, [name]: value / (name === "cantitate" ? 1 : conversionRate) };
+                                if (name === "pretAchizitie" && salePrice(editing) === editing.pretAchizitie * SALE_PRICE_MULTIPLIER) {
+                                  updated.pretVanzare = updated.pretAchizitie * SALE_PRICE_MULTIPLIER;
+                                }
+                                setEditing(updated);
+                              }}
                             >
-                              <Label>{label}</Label>
+                              <Label>{name === "cantitate" ? label : `${label} (${displayCurrency})`}</Label>
                               <NumberField.Group className="border border-border focus-within:ring-2 focus-within:ring-accent">
                                 <NumberField.DecrementButton aria-label={`Scade ${label.toLowerCase()}`} />
                                 <NumberField.Input className="min-w-0 tabular-nums" />
@@ -531,7 +727,7 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
                       <Button slot="close" variant="secondary" isDisabled={saving}>
                         Anulează
                       </Button>
-                      <Button slot="close" onPress={() => { editing && void validate(editing); }} isDisabled={saving || !editing || !hasValidPrices(editing)}>
+                      <Button onPress={() => { if (editing) void validate(editing); }} isDisabled={saving || !editing || !hasValidPrices(editing)}>
                         {saving ? <Spinner size="sm" /> : <Check className="size-4" />}Salvează și validează
                       </Button>
                     </Drawer.Footer>
@@ -542,16 +738,20 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
             
             {oferta?.hasMatched && (
               <section aria-label="Preview ofertă" className="min-w-0">
+                {oferta.needsExportRefresh && <p role="status" className="mb-4 rounded-xl border border-border bg-secondary/40 p-4 text-sm">Formatul exportului a fost actualizat. Generează din nou Excelul pentru a aplica culorile textului și a elimina bordurile și coloana Total final. Materialele și validările sunt păstrate.</p>}
                 <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
                   <div>
                     <h2 className="text-xl font-semibold">Materiale și prețuri</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">{materialCount} materiale</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{materialCount} materiale în ofertă{activeSheet ? ` · Foaia „${activeSheet}”` : ""}</p>
                   </div>
-                  <Button variant="secondary" onPress={() => setDisplayCurrency(displayCurrency === "EUR" ? "RON" : "EUR")} className="flex flex-col items-end gap-1">
-                    <p className="text-xs text-muted-foreground">Total vânzare + manoperă</p>
-                    <p className="text-xl font-semibold tabular-nums">{displayCurrencyFormatter.format(displayedTotal)}</p>
+                  <Button variant="secondary" onPress={() => setCurrencyChoice({ offerKey, currency: displayCurrency === "EUR" ? "RON" : "EUR" })} className="flex flex-col items-end gap-1">
+                    <p className="text-xs text-muted-foreground">Total ofertă · vânzare + manoperă</p>
+                    <p className="text-xl font-semibold tabular-nums">{displayedTotal === null ? "—" : displayCurrencyFormatter.format(displayedTotal)}</p>
                   </Button>
                 </div>
+                {displayCurrency === "RON" && eurToRonRate === null && (
+                  <p role="status" className="mb-3 text-sm text-warning">{exchangeRate === undefined ? "Se încarcă cursul EUR/RON..." : "Cursul EUR/RON nu este disponibil. Totalul poate fi afișat în EUR."} {exchangeRate !== undefined && <Link href="/preturi" className="underline">Verifică cursul valutar</Link>}</p>
+                )}
                 <div className="mt-6 mb-3 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-5">
                   <div className="mb-4 flex flex-row gap-5">
                     <Checkbox className="flex flex-row items-center gap-2" isSelected={onlyPending} onChange={setOnlyPending} isDisabled={busy || editing !== null}>
@@ -574,8 +774,8 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
                     </Button>
                   )}
                 </div>
-                {!oferta.materialsReady ? <PrepareMaterialPages key={oferta._id} idGenerare={oferta._id} /> : onlyPending && pendingCount === 0 ? <p role="status" className="border-y border-border py-8 text-sm text-success">Nu mai există materiale de validat.</p> : (
-                  <MaterialePages key={`${oferta._id}:${onlyPending}`} idGenerare={oferta._id} pendingOnly={onlyPending} currency={currency} busy={busy} editing={editing} setEditing={handleEditStart} onValidate={validate} conversionRate={conversionRate} displayCurrency={displayCurrency} displayCurrencyFormatter={displayCurrencyFormatter} />
+                {!oferta.materialsReady ? <PrepareMaterialPages key={oferta._id} idGenerare={oferta._id} /> : materialCount === 0 ? <p role="status" className="border-y border-border py-8 text-sm text-muted-foreground">Toate materialele au fost șterse din ofertă. Nu există materiale de exportat.</p> : onlyPending && pendingCount === 0 ? <p role="status" className="border-y border-border py-8 text-sm text-success">Nu mai există materiale de validat.</p> : (
+                  <MaterialePages key={`${oferta._id}:${activeSheet}:${onlyPending}:${priceSort?.field}:${priceSort?.direction}`} idGenerare={oferta._id} sheetName={activeSheet} pendingOnly={onlyPending} busy={busy} editing={editing} setEditing={handleEditStart} onValidate={validate} onDelete={deleteMaterial} onReplace={setReplacing} sort={priceSort} onSort={changeSort} conversionRate={conversionRate} displayCurrency={displayCurrency} displayCurrencyFormatter={displayCurrencyFormatter} />
                 )}
               </section>
             )}

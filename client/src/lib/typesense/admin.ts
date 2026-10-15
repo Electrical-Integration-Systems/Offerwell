@@ -22,6 +22,16 @@ export async function adaugaMaterial(material: MaterialHit) {
   return typesenseClient.collections<MaterialHit>("materiale").documents().create(material);
 }
 
+export async function importaMateriale(materials: MaterialHit[]) {
+  try {
+    return await typesenseClient.collections<MaterialHit>("materiale").documents().import(materials, { action: "create" });
+  } catch (error) {
+    // The SDK throws even when only some rows fail; preserve every row's result.
+    if (error instanceof Typesense.Errors.ImportError) return error.importResults;
+    throw error;
+  }
+}
+
 /**
  * Update an existing material in the 'materiale' collection.
  * @param id The document ID

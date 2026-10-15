@@ -46,6 +46,15 @@ export async function ensureDocuments(collectionName: string, documents: Materia
         await client.collections(collectionName).documents().import(documents);
         console.log(`Documents imported into collection ${collectionName}`);
     } catch (error) {
-        console.error(`Error importing documents into collection ${collectionName}:`, error);
+        if (error instanceof Typesense.Errors.ImportError) {
+            const reasons = new Map<string, number>();
+            for (const result of error.importResults) {
+                if (!result.success) {
+                    reasons.set(result.error, (reasons.get(result.error) ?? 0) + 1);
+                }
+            }
+            throw new Error(`${error.message}\n${[...reasons].map(([reason, count]) => `${count} documents: ${reason}`).join("\n")}`);
+        }
+        throw error;
     }
 }
