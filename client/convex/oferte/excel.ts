@@ -19,6 +19,28 @@ export function populateWorkbook(input: ArrayBuffer, mapping: NonNullable<Doc<"o
   const sheet = sheetName === undefined ? sheets[0] : sheets.find((entry) => entry.getAttribute("name") === sheetName);
   const relationshipId = sheet?.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships", "id");
   const relationships = parse("xl/_rels/workbook.xml.rels");
+  // Source calculation entries can point to quantity formulas replaced by values.
+  // Drop the optional chain and its package references; Excel rebuilds it on open.
+  const calculationLinks = Array.from(relationships.getElementsByTagNameNS("*", "Relationship"))
+    .filter((item) => item.getAttribute("Type")?.endsWith("/calcChain"));
+  const contentTypes = parse("[Content_Types].xml");
+  const calculationOverrides = Array.from(contentTypes.getElementsByTagNameNS("*", "Override"))
+    .filter((item) => item.getAttribute("ContentType")?.endsWith(".calcChain+xml"));
+  if (calculationLinks.length || calculationOverrides.length || archive["xl/calcChain.xml"]) {
+    for (const link of calculationLinks) {
+      const target = link.getAttribute("Target");
+      if (target && link.getAttribute("TargetMode") !== "External") delete archive[new URL(target, "https://xlsx.local/xl/workbook.xml").pathname.slice(1)];
+      link.parentNode!.removeChild(link);
+    }
+    for (const override of calculationOverrides) {
+      const partName = override.getAttribute("PartName");
+      if (partName) delete archive[partName.replace(/^\//, "")];
+      override.parentNode!.removeChild(override);
+    }
+    delete archive["xl/calcChain.xml"];
+    archive["xl/_rels/workbook.xml.rels"] = strToU8(new XMLSerializer().serializeToString(relationships));
+    archive["[Content_Types].xml"] = strToU8(new XMLSerializer().serializeToString(contentTypes));
+  }
   const relationship = Array.from(relationships.getElementsByTagNameNS("*", "Relationship"))
     .find((item) => item.getAttribute("Id") === relationshipId);
   const target = relationship?.getAttribute("Target");

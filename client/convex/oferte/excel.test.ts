@@ -20,6 +20,31 @@ function parse(archive: Record<string, Uint8Array>, path: string) {
   return new DOMParser().parseFromString(strFromU8(archive[path]), "application/xml");
 }
 
+test("BoQ exports remove the obsolete calculation chain and its package references while preserving external links and other sheets", () => {
+  const source = new Uint8Array(readFileSync(new URL("../../../tests/in/Anexa_preturi_BoQ - Achizitie.xlsx", import.meta.url))).buffer;
+  const original = unzipSync(new Uint8Array(source));
+  expect(original["xl/calcChain.xml"]).toBeDefined();
+  const sourceSheet = parse(original, "xl/worksheets/sheet1.xml");
+  const quantity = Array.from(sourceSheet.getElementsByTagNameNS("*", "c")).find((cell) => cell.getAttribute("r") === "E35")!;
+  expect(quantity.getElementsByTagNameNS("*", "f").length).toBe(1);
+  const output = unzipSync(new Uint8Array(populateWorkbook(source, { ...mapping, randIncepereDate: 17, coloanaDescriere: "C", coloanaCantitati: "E", coloanaUnitate: "D", coloanaSfarsitDate: "L" }, [{ ...material, rand: 35 }], 1, "F3_CTCS")));
+  expect(output["xl/calcChain.xml"]).toBeUndefined();
+  const relationships = parse(output, "xl/_rels/workbook.xml.rels");
+  expect(Array.from(relationships.getElementsByTagNameNS("*", "Relationship")).some((link) => link.getAttribute("Type")?.endsWith("/calcChain"))).toBe(false);
+  const contentTypes = parse(output, "[Content_Types].xml");
+  expect(Array.from(contentTypes.getElementsByTagNameNS("*", "Override")).some((entry) => entry.getAttribute("PartName") === "/xl/calcChain.xml" || entry.getAttribute("ContentType")?.endsWith(".calcChain+xml"))).toBe(false);
+  const resultSheet = parse(output, "xl/worksheets/sheet1.xml");
+  const changed = Array.from(resultSheet.getElementsByTagNameNS("*", "c")).find((cell) => cell.getAttribute("r") === "E35")!;
+  expect(changed.getElementsByTagNameNS("*", "f").length).toBe(0);
+  expect(changed.getElementsByTagNameNS("*", "v")[0].textContent).toBe("3");
+  expect(output["xl/worksheets/sheet2.xml"]).toEqual(original["xl/worksheets/sheet2.xml"]);
+  for (const path of Object.keys(original).filter((path) => path.startsWith("xl/externalLinks/"))) expect(output[path]).toEqual(original[path]);
+  const workbook = parse(output, "xl/workbook.xml");
+  const calculation = workbook.getElementsByTagNameNS("*", "calcPr")[0];
+  expect(calculation.getAttribute("fullCalcOnLoad")).toBe("1");
+  expect(calculation.getAttribute("forceFullCalc")).toBe("1");
+});
+
 test("export headers and values use the reference colors, bold text and two decimal places", () => {
   const bytes = populateWorkbook(fixture(), mapping, [material]);
   const output = unzipSync(new Uint8Array(bytes));

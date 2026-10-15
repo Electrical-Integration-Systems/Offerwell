@@ -799,7 +799,7 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
             
             {oferta?.hasMatched && (
               <section aria-label="Preview ofertă" className="min-w-0">
-                {oferta.needsExportRefresh && <p role="status" className="mb-4 rounded-xl border border-border bg-secondary/40 p-4 text-sm">Formatul exportului a fost actualizat. Generează din nou Excelul pentru a aplica culorile textului și a elimina bordurile și coloana Total final. Materialele și validările sunt păstrate.</p>}
+                {oferta.needsExportRefresh && <p role="status" className="mb-4 rounded-xl border border-border bg-secondary/40 p-4 text-sm">Exportul a fost actualizat pentru compatibilitate cu Microsoft Excel. Regenerează fișierul; materialele, prețurile și validările sunt păstrate.</p>}
                 <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
                   <div>
                     <h2 className="text-xl font-semibold">Materiale și prețuri</h2>
