@@ -384,8 +384,8 @@ export const cautaSiPopuleazaPreturi = action({
 
 // ACTION 2: Generează fișierul Excel de ieșire cu coloanele noi și formule
 export const genereazaExcelOutput = action({
-  args: { idGenerare: v.id("oferte") },
-  handler: async (ctx, args): Promise<{ success: boolean; storageId: string }> => {
+  args: { idGenerare: v.id("oferte"), allowUnvalidated: v.optional(v.boolean()) },
+  handler: async (ctx, args): Promise<{ success: boolean; storageId: string; downloadUrl: string | null; fileName: string }> => {
     const userId = await getAuthUserId(ctx);
     if (userId === null) throw flowError("AUTH", "Autentificarea este necesară. Conectează-te din nou pentru a continua.");
 
@@ -394,7 +394,7 @@ export const genereazaExcelOutput = action({
     if (!generare || !generare.excelInput || !generare.excelMapping || !generare.materialePotrivite) {
       throw flowError("RETRY", "Oferta nu este pregătită pentru export. Reia procesarea și verifică materialele.");
     }
-    assertReadyForExport(generare.materialePotrivite);
+    assertReadyForExport(generare.materialePotrivite, args.allowUnvalidated);
 
     // 1. Descarcam fișierul input original din Storage
     const fileBlob = await ctx.storage.get(generare.excelInput.content);
@@ -434,15 +434,17 @@ export const genereazaExcelOutput = action({
 
     // 5. Salvăm în Convex Storage
     const storageId = await ctx.storage.store(new Blob([excelBuffer], { type: EXCEL_MIME_TYPE }));
+    const fileName = `${generare.excelInput.fileName}`;
 
     // 6. Legăm noul fișier de intrarea din baza de date
     try {
       await ctx.runMutation(internal.oferte.mutations.updateExcelOutput, {
         idGenerare: args.idGenerare,
         expectedRevision: generare.revision ?? 0,
+        allowUnvalidated: args.allowUnvalidated,
         excelOutput: {
           content: storageId,
-          fileName: `Oferta_Completata_${generare.excelInput.fileName}`,
+          fileName,
           formatVersion: CURRENT_EXPORT_FORMAT,
         }
       });
@@ -451,6 +453,6 @@ export const genereazaExcelOutput = action({
       throw error;
     }
 
-    return { success: true, storageId };
+    return { success: true, storageId, downloadUrl: await ctx.storage.getUrl(storageId), fileName };
   },
 });

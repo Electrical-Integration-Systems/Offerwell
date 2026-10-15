@@ -20,7 +20,7 @@ test.each([
   expect(getFlowError(flowError(code, "Mesaj pentru utilizator"), "analysis")).toMatchObject({ code, recovery, message: "Mesaj pentru utilizator" });
 });
 
-test.each<FlowStage>(["upload", "analysis", "extraction", "matching", "validation", "deletion", "replacement", "export", "load"])("unknown %s failures do not expose internals or imply bad structure", (stage) => {
+test.each<FlowStage>(["upload", "analysis", "extraction", "matching", "validation", "bulkValidation", "deletion", "replacement", "export", "load"])("unknown %s failures do not expose internals or imply bad structure", (stage) => {
   for (const raw of [new Error("GROQ_API_KEY / stack / secret"), new ConvexError("Request failed / stack"), null, { data: { code: "STRUCTURE", message: "untrusted" } }]) {
     const error = getFlowError(raw, stage);
     expect(error.recovery).toBe("retry");

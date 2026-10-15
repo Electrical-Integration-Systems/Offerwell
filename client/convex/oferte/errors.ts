@@ -16,7 +16,7 @@ const recoveries = {
 } as const;
 
 export type FlowErrorCode = keyof typeof recoveries;
-export type FlowStage = "upload" | "analysis" | "extraction" | "matching" | "validation" | "deletion" | "replacement" | "export" | "load";
+export type FlowStage = "upload" | "analysis" | "extraction" | "matching" | "validation" | "bulkValidation" | "deletion" | "replacement" | "export" | "load";
 export type FlowError = { code: FlowErrorCode; message: string; sheetName?: string; recovery: typeof recoveries[FlowErrorCode] };
 
 export function flowError(code: FlowErrorCode, message: string, sheetName?: string) {
@@ -33,6 +33,7 @@ const fallbackMessages: Record<FlowStage, string> = {
   extraction: "Materialele nu au putut fi extrase. Încearcă din nou. Dacă problema persistă, verifică manual structura Excelului.",
   matching: "Căutarea prețurilor nu a putut fi finalizată. Încearcă din nou; fișierul încărcat este păstrat.",
   validation: "Validarea nu a putut fi salvată. Valorile introduse sunt păstrate. Încearcă din nou.",
+  bulkValidation: "Validarea multiplă nu a putut fi salvată. Verifică lista actualizată și încearcă din nou.",
   deletion: "Materialul nu a putut fi șters. Verifică lista actualizată și încearcă din nou.",
   replacement: "Materialul asociat nu a putut fi schimbat. Verifică lista actualizată și încearcă din nou.",
   export: "Excelul nu a putut fi generat. Încearcă din nou; materialele validate sunt păstrate.",

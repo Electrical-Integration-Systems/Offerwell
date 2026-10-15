@@ -3,7 +3,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { paginationOptsValidator } from "convex/server";
-import { getOfferProgress, normalizeMaterial, summarizeMaterials, type MatchedMaterial } from "./review";
+import { canBulkValidate, getOfferProgress, normalizeMaterial, summarizeMaterials, type MatchedMaterial } from "./review";
 import { flowError } from "./errors";
 import { isCurrentExcelOutput } from "./export_format";
 
@@ -71,6 +71,23 @@ export const listMateriale = query({
     const pending = args.sortBy && args.pendingOnly ? indexed.filter((q) => q.eq(q.field("pending"), true)) : indexed;
     const result = await (args.sheetName ? pending.filter((q) => q.eq(q.field("sheetName"), args.sheetName)) : pending).paginate(args.paginationOpts);
     return { ...result, page: result.page.map(normalizeMaterial) };
+  },
+});
+
+export async function bulkValidationCandidates(ctx: QueryCtx, idGenerare: Id<"oferte">, minimumQuality: number, sheetName?: string) {
+  if (!Number.isFinite(minimumQuality) || minimumQuality < 1 || minimumQuality > 10) {
+    throw flowError("VALIDATION", "Alege o calitate minimă între 1 și 10.");
+  }
+  const pending = ctx.db.query("ofertaMateriale").withIndex("by_oferta_and_pending_and_rand", (index) => index.eq("oferta", idGenerare).eq("pending", true));
+  const rows = await (sheetName ? pending.filter((q) => q.eq(q.field("sheetName"), sheetName)) : pending).collect();
+  return rows.map(normalizeMaterial).filter((material) => canBulkValidate(material, minimumQuality));
+}
+
+export const countBulkValidation = query({
+  args: { idGenerare: v.id("oferte"), minimumQuality: v.number(), sheetName: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    await getOwnedOferta(ctx, args.idGenerare);
+    return (await bulkValidationCandidates(ctx, args.idGenerare, args.minimumQuality, args.sheetName)).length;
   },
 });
 

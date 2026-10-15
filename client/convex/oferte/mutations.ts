@@ -2,7 +2,7 @@ import { mutation, internalMutation, type MutationCtx } from "../_generated/serv
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { Doc, Id } from "../_generated/dataModel";
-import { getMaterials, getOwnedOferta } from "./queries";
+import { bulkValidationCandidates, getMaterials, getOwnedOferta } from "./queries";
 import { matchedMaterialValidator } from "../schema";
 import { assertReadyForExport, hasValidPrices, materialTotal, needsReview, normalizeMaterial, summarizeMaterials, MAX_EXCEL_BYTES, MAX_MATERIALS, type MatchedMaterial } from "./review";
 import { salePrice } from "../material_prices";
@@ -277,6 +277,22 @@ export const valideazaMaterial = mutation({
   },
 });
 
+export const valideazaMaterialeDupaCalitate = mutation({
+  args: { idGenerare: v.id("oferte"), expectedRevision: v.number(), minimumQuality: v.number(), sheetName: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const oferta = await getCurrentOferta(ctx, args);
+    const summary = await ensureMaterials(ctx, oferta);
+    const candidates = await bulkValidationCandidates(ctx, args.idGenerare, args.minimumQuality, args.sheetName);
+    if (!candidates.length) return { validatedCount: 0 };
+    for (const material of candidates) await ctx.db.patch(material._id, { validated: true, pending: false });
+    await ctx.db.patch(args.idGenerare, {
+      materialSummary: { ...summary, pendingCount: summary.pendingCount - candidates.length },
+      excelOutput: undefined, revision: args.expectedRevision + 1,
+    });
+    return { validatedCount: candidates.length };
+  },
+});
+
 export const schimbaMaterial = mutation({
   args: {
     idGenerare: v.id("oferte"), expectedRevision: v.number(), rand: v.number(), sheetName: v.optional(v.string()),
@@ -337,6 +353,7 @@ export const updateExcelOutput = internalMutation({
   args: {
     idGenerare: v.id("oferte"),
     expectedRevision: v.number(),
+    allowUnvalidated: v.optional(v.boolean()),
     excelOutput: v.object({
       content: v.id("_storage"),
       fileName: v.string(),
@@ -345,7 +362,7 @@ export const updateExcelOutput = internalMutation({
   },
   handler: async (ctx, args) => {
     const oferta = await getCurrentOferta(ctx, args);
-    assertReadyForExport(await getMaterials(ctx, oferta));
+    assertReadyForExport(await getMaterials(ctx, oferta), args.allowUnvalidated);
     await ctx.db.patch(args.idGenerare, { excelOutput: args.excelOutput });
   },
 });

@@ -296,6 +296,66 @@ test("reports completed batches while matching is still running, then finishes a
   expect(done.hasMatched).toBe(true);
 });
 
+test("confirmed exports include unvalidated materials, preserve review state and can be regenerated from current prices", async () => {
+  const { t, user, idGenerare } = await fixture(["Electrice"]);
+  await user.action(api.oferte.actions.salveazaStructuraExcel, { idGenerare, expectedRevision: 0, sheetName: "Electrice", excelMapping: firstMapping });
+  await user.action(api.oferte.actions.extrageMateriale, { idGenerare });
+  vi.mocked(blendSearch).mockResolvedValue({ hits: [{ document: { descriere: "Referință", pretAchizitie: 10, pretVanzare: 15, manopera: 2 } }] } as unknown as Awaited<ReturnType<typeof blendSearch>>);
+  vi.mocked(alegePret).mockResolvedValue({ answers: { price: { choice: "Referință" } } } as Awaited<ReturnType<typeof alegePret>>);
+  await user.action(api.oferte.actions.cautaSiPopuleazaPreturi, { idGenerare });
+  await expect(user.action(api.oferte.actions.genereazaExcelOutput, { idGenerare })).rejects.toThrow("confirmă generarea");
+  const first = await user.action(api.oferte.actions.genereazaExcelOutput, { idGenerare, allowUnvalidated: true });
+  expect(first.downloadUrl).toBeTruthy();
+  expect(first.fileName).toBe("mai-multe-foi.xlsx");
+  expect((await user.query(api.oferte.queries.getOferta, { idGenerare })).pendingCount).toBe(2);
+  const second = await user.action(api.oferte.actions.genereazaExcelOutput, { idGenerare, allowUnvalidated: true });
+  expect(second.storageId).not.toBe(first.storageId);
+  expect((await t.run((ctx) => ctx.db.get(idGenerare)))!.excelOutput!.content).toBe(second.storageId);
+  await user.mutation(api.oferte.mutations.valideazaMaterial, { idGenerare, expectedRevision: 3, sheetName: "Electrice", rand: 2,
+    cantitate: 9, pretAchizitie: 20, pretVanzare: 30, manopera: 4 });
+  await expect(user.action(api.oferte.actions.genereazaExcelOutput, { idGenerare, allowUnvalidated: false })).rejects.toThrow("confirmă generarea");
+  const regenerated = await user.action(api.oferte.actions.genereazaExcelOutput, { idGenerare, allowUnvalidated: true });
+  const bytes = await t.run(async (ctx) => (await ctx.storage.get(regenerated.storageId as Id<"_storage">))!.arrayBuffer());
+  const output = XLSX.read(bytes, { type: "array" }).Sheets.Electrice;
+  expect(output.A2.v).toBe("Cablu");
+  expect(output.B2.v).toBe(9);
+  expect(output.E2.v).toBe(20);
+  expect(output.G2.v).toBe(30);
+  expect(output.H2.v).toBe(270);
+  const pending = await user.query(api.oferte.queries.listMateriale, { idGenerare, pendingOnly: true, paginationOpts: { numItems: 10, cursor: null } });
+  expect(pending.page).toHaveLength(1);
+  expect(pending.page[0]).toMatchObject({ rand: 3, validated: false });
+});
+
+test("confirmed exports include zero prices for unmatched materials without validating them", async () => {
+  const { t, user, idGenerare } = await fixture(["Electrice"]);
+  await user.action(api.oferte.actions.salveazaStructuraExcel, { idGenerare, expectedRevision: 0, sheetName: "Electrice", excelMapping: firstMapping });
+  await user.action(api.oferte.actions.extrageMateriale, { idGenerare });
+  vi.mocked(blendSearch).mockResolvedValue({ hits: [] } as unknown as Awaited<ReturnType<typeof blendSearch>>);
+  await user.action(api.oferte.actions.cautaSiPopuleazaPreturi, { idGenerare });
+  const generated = await user.action(api.oferte.actions.genereazaExcelOutput, { idGenerare, allowUnvalidated: true });
+  const bytes = await t.run(async (ctx) => (await ctx.storage.get(generated.storageId as Id<"_storage">))!.arrayBuffer());
+  const output = XLSX.read(bytes, { type: "array" }).Sheets.Electrice;
+  expect(output.E2.v).toBe(0);
+  expect(output.E3.v).toBe(0);
+  expect(output.A3.v).toBe("Tub");
+  expect((await user.query(api.oferte.queries.getOferta, { idGenerare })).pendingCount).toBe(2);
+});
+
+test.each([{ cantitate: NaN }, { pretAchizitie: -1 }, { manopera: Infinity }])("confirmation does not allow invalid numeric values into Excel (%j)", async (invalid) => {
+  const { t, user, idGenerare } = await fixture(["Electrice"]);
+  await user.action(api.oferte.actions.salveazaStructuraExcel, { idGenerare, expectedRevision: 0, sheetName: "Electrice", excelMapping: firstMapping });
+  await user.action(api.oferte.actions.extrageMateriale, { idGenerare });
+  vi.mocked(blendSearch).mockResolvedValue({ hits: [] } as unknown as Awaited<ReturnType<typeof blendSearch>>);
+  await user.action(api.oferte.actions.cautaSiPopuleazaPreturi, { idGenerare });
+  await t.run(async (ctx) => {
+    const row = await ctx.db.query("ofertaMateriale").first();
+    await ctx.db.patch(row!._id, invalid);
+  });
+  await expect(user.action(api.oferte.actions.genereazaExcelOutput, { idGenerare, allowUnvalidated: true })).rejects.toThrow("Corectează valorile nevalide");
+  expect((await t.run((ctx) => ctx.db.get(idGenerare)))!.excelOutput).toBeUndefined();
+});
+
 test("failed matching stops its progress indicator and a retry starts from zero", async () => {
   const { user, idGenerare } = await fixture(["Electrice"]);
   await user.action(api.oferte.actions.salveazaStructuraExcel, { idGenerare, expectedRevision: 0, sheetName: "Electrice", excelMapping: firstMapping });

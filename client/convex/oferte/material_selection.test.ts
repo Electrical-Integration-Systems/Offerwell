@@ -121,3 +121,60 @@ test("quantity and total sorting stay current after validation and catalog repla
     sortBy: "totalVanzareManopera", sortDirection: "asc", paginationOpts: { numItems: 3, cursor: null } });
   expect(sorted.page[0]).toMatchObject({ rand: 2, totalVanzareManopera: 0, matchScore: 10 });
 });
+
+test.each([false, true])("bulk validation includes the selected quality boundary across pages, and preserves other sheets and prices (legacy=%s)", async (legacy) => {
+  const { t, user, idGenerare } = await fixture(legacy);
+  await user.mutation(api.oferte.mutations.prepareMaterialPagination, { idGenerare });
+  const before = await user.query(internal.oferte.queries.getGenerare, { idGenerare });
+  expect(await user.query(api.oferte.queries.countBulkValidation, { idGenerare, sheetName: "Foaia 1", minimumQuality: 10 })).toBe(4);
+  const result = await user.mutation(api.oferte.mutations.valideazaMaterialeDupaCalitate, { idGenerare, expectedRevision: before.revision!, sheetName: "Foaia 1", minimumQuality: 10 });
+  expect(result.validatedCount).toBe(4);
+  const after = await user.query(internal.oferte.queries.getGenerare, { idGenerare });
+  expect(after.materialSummary!.pendingCount).toBe(before.materialSummary!.pendingCount - 4);
+  expect(after.materialSummary!.total).toBe(before.materialSummary!.total);
+  expect(after.revision).toBe(before.revision! + 1);
+  expect(after.excelOutput).toBeUndefined();
+  for (const row of after.materialePotrivite!) {
+    const old = before.materialePotrivite!.find((item) => item.sheetName === row.sheetName && item.rand === row.rand)!;
+    expect(row).toMatchObject({ cantitate: old.cantitate, pretAchizitie: old.pretAchizitie, pretVanzare: old.pretVanzare, manopera: old.manopera });
+    if (row.sheetName === "Foaia 2" || row.matchScore < 10) expect(row.validated).toBe(old.validated);
+    else expect(row.validated).toBe(true);
+  }
+  expect(await user.query(api.oferte.queries.countBulkValidation, { idGenerare, sheetName: "Foaia 1", minimumQuality: 10 })).toBe(0);
+  const repeated = await user.mutation(api.oferte.mutations.valideazaMaterialeDupaCalitate, { idGenerare, expectedRevision: after.revision!, sheetName: "Foaia 1", minimumQuality: 10 });
+  expect(repeated.validatedCount).toBe(0);
+  expect((await t.run((ctx) => ctx.db.get(idGenerare)))!.revision).toBe(after.revision);
+});
+
+test("bulk validation leaves unmatched, failed, invalid-price and zero-quantity rows for manual review", async () => {
+  const { t, user, idGenerare } = await fixture();
+  await t.run(async (ctx) => {
+    const rows = await ctx.db.query("ofertaMateriale").collect();
+    const edits = [{ descriereGasita: "Nu a fost găsit în baza de date" }, { descriereGasita: "Eroare la căutare" }, { pretAchizitie: -1 }, { cantitate: 0 }];
+    for (let i = 0; i < edits.length; i++) {
+      const row = rows.find((item) => item.sheetName === "Foaia 1" && item.rand === [5, 8, 11, 14][i])!;
+      await ctx.db.patch(row._id, edits[i]);
+    }
+  });
+  await user.mutation(api.oferte.mutations.prepareMaterialPagination, { idGenerare });
+  expect(await user.query(api.oferte.queries.countBulkValidation, { idGenerare, sheetName: "Foaia 1", minimumQuality: 1 })).toBe(1);
+  expect((await user.mutation(api.oferte.mutations.valideazaMaterialeDupaCalitate, { idGenerare, expectedRevision: 7, sheetName: "Foaia 1", minimumQuality: 1 })).validatedCount).toBe(1);
+  const pending = await user.query(api.oferte.queries.listMateriale, { idGenerare, sheetName: "Foaia 1", pendingOnly: true, paginationOpts: { numItems: 30, cursor: null } });
+  expect(pending.page.map((row) => row.rand)).toEqual([5, 8, 11, 14]);
+});
+
+test("bulk validation rejects invalid thresholds, stale revisions and unauthorized users without changing data", async () => {
+  const { t, user, idGenerare, otherUserId } = await fixture();
+  const args = { idGenerare, expectedRevision: 7, minimumQuality: 7, sheetName: "Foaia 1" };
+  for (const minimumQuality of [0, 11, NaN, Infinity]) {
+    await expect(user.mutation(api.oferte.mutations.valideazaMaterialeDupaCalitate, { ...args, minimumQuality })).rejects.toThrow();
+    await expect(user.query(api.oferte.queries.countBulkValidation, { idGenerare, minimumQuality })).rejects.toThrow();
+  }
+  await expect(user.mutation(api.oferte.mutations.valideazaMaterialeDupaCalitate, { ...args, expectedRevision: 6 })).rejects.toThrow();
+  await expect(t.mutation(api.oferte.mutations.valideazaMaterialeDupaCalitate, args)).rejects.toThrow();
+  await expect(t.withIdentity({ subject: `${otherUserId}|session` }).mutation(api.oferte.mutations.valideazaMaterialeDupaCalitate, args)).rejects.toThrow();
+  const offer = await t.run((ctx) => ctx.db.get(idGenerare));
+  expect(offer!.revision).toBe(7);
+  expect(offer!.materialSummary!.pendingCount).toBe(10);
+  expect(offer!.excelOutput).toBeDefined();
+});

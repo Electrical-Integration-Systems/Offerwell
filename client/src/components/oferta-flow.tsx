@@ -7,7 +7,7 @@ import { useAction, useConvex, useConvexAuth, useMutation, usePaginatedQuery, us
 import { CursorPagination, PAGE_SIZE, useCursorPagination } from "./cursor-pagination";
 import GradientText from "@/components/react-bits/GradientText";
 import { Sparkles, UploadCloud, Check, Pencil, Trash, Sheet, Download, CircleAlert, ArrowLeft, Eye, Replace, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
-import { Table, Button, Input, Spinner, Tooltip, NumberField, Label, Checkbox, Drawer, Fieldset, FieldGroup, FieldError, toast } from "@heroui/react";
+import { Table, Button, Input, Spinner, Tooltip, NumberField, Label, Checkbox, Drawer, AlertDialog, Fieldset, FieldGroup, FieldError, toast } from "@heroui/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { EXCEL_MIME_TYPE, MAX_EXCEL_BYTES, hasValidPrices, needsReview, type MatchedMaterial } from "../../convex/oferte/review";
@@ -336,12 +336,19 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
   const extrageMateriale = useAction(api.oferte.actions.extrageMateriale);
   const cautaPreturi = useAction(api.oferte.actions.cautaSiPopuleazaPreturi);
   const valideazaMaterial = useMutation(api.oferte.mutations.valideazaMaterial);
+  const valideazaMaterialeDupaCalitate = useMutation(api.oferte.mutations.valideazaMaterialeDupaCalitate);
   const stergeMaterial = useMutation(api.oferte.mutations.stergeMaterial);
   const genereazaExcel = useAction(api.oferte.actions.genereazaExcelOutput);
   const materialCount = oferta?.materialCount ?? 0;
   const pendingCount = oferta?.pendingCount ?? 0;
   const [sheetChoice, setSheetChoice] = useState<string | null>(null);
   const activeSheet = oferta?.selectedSheets?.includes(sheetChoice ?? "") ? sheetChoice! : oferta?.selectedSheets?.[0];
+  const [minimumQuality, setMinimumQuality] = useState(7);
+  const [bulkValidating, setBulkValidating] = useState(false);
+  const [exportConfirmationOpen, setExportConfirmationOpen] = useState(false);
+  const validQuality = Number.isFinite(minimumQuality) && minimumQuality >= 1 && minimumQuality <= 10;
+  const bulkValidationCount = useQuery(api.oferte.queries.countBulkValidation,
+    idGenerare && oferta?.materialsReady && validQuality ? { idGenerare, minimumQuality, sheetName: activeSheet } : "skip");
   const activeMapping = oferta?.sheetMappings?.find((entry) => entry.sheetName === activeSheet)?.mapping ?? (!oferta?.selectedSheets ? oferta?.excelMapping : undefined);
   const baseValuta = activeMapping?.valuta || "RON";
   const [excelFile, setExcelFile] = useState<File | null>(null);
@@ -470,6 +477,24 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
     }
   };
 
+  const bulkValidate = async () => {
+    if (!idGenerare || !oferta || inFlight.current || editing || !validQuality) return;
+    inFlight.current = true;
+    setSaving(true);
+    setBulkValidating(true);
+    setOperationError(null);
+    try {
+      const result = await valideazaMaterialeDupaCalitate({ idGenerare, expectedRevision: oferta.revision, minimumQuality, sheetName: activeSheet });
+      toast.success(result.validatedCount ? `${result.validatedCount} materiale validate cu succes.` : "Nu există materiale eligibile pentru pragul ales.");
+    } catch (caught) {
+      setOperationError({ error: getFlowError(caught, "bulkValidation"), stage: "bulkValidation" });
+    } finally {
+      setSaving(false);
+      setBulkValidating(false);
+      inFlight.current = false;
+    }
+  };
+
   const deleteMaterial = async (material: MatchedMaterial) => {
     if (!idGenerare || !oferta || inFlight.current || editing) return;
     inFlight.current = true;
@@ -493,19 +518,36 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
     setIsDrawerOpen(true);
   };
 
-  const exportFile = async () => {
-    if (!idGenerare || inFlight.current || editing || !oferta?.hasMatched || pendingCount) return;
+  const exportFile = async (allowUnvalidated = false) => {
+    if (!idGenerare || inFlight.current || editing || !oferta?.hasMatched || !materialCount) return;
+    if (pendingCount && !allowUnvalidated) { setExportConfirmationOpen(true); return; }
+    setExportConfirmationOpen(false);
     inFlight.current = true;
     setActiveStep(5);
     setOperationError(null);
     try {
-      await genereazaExcel({ idGenerare });
+      const generated = await genereazaExcel({ idGenerare, allowUnvalidated });
       const id = toast.success("Excel generat cu succes.", {
         actionProps: {
           children: "Dismiss",
           onPress: () => toast.close(id)
         }
       });
+      try {
+        if (!generated.downloadUrl) throw new Error("Missing download URL");
+        const response = await fetch(generated.downloadUrl);
+        if (!response.ok) throw new Error("Download failed");
+        const url = URL.createObjectURL(await response.blob());
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = generated.fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      } catch {
+        toast.danger("Excelul a fost generat, dar descărcarea automată a eșuat. Folosește butonul „Descarcă Excel”.");
+      }
     } catch (caught) {
       const error = getFlowError(caught, "export");
       setOperationError({ error, stage: "export" });
@@ -622,6 +664,7 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
               error={operationError.error} disabled={activeStep !== null || saving}
               onRetry={() => {
                 if (operationError.stage === "export") void exportFile();
+                else if (operationError.stage === "bulkValidation") void bulkValidate();
                 else if (operationError.stage === "deletion" && failedDeletion) void deleteMaterial(failedDeletion);
                 else if (operationError.stage === "validation" && editing) void validate(editing);
                 else void processFile();
@@ -672,6 +715,24 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
               </div>
             )}
             
+            <AlertDialog isOpen={exportConfirmationOpen} onOpenChange={setExportConfirmationOpen}>
+              <AlertDialog.Backdrop isKeyboardDismissDisabled={false}>
+                <AlertDialog.Container><AlertDialog.Dialog>
+                  <AlertDialog.Header>
+                    <AlertDialog.Icon status="warning" />
+                    <AlertDialog.Heading>Generezi Excelul cu materiale nevalidate?</AlertDialog.Heading>
+                  </AlertDialog.Header>
+                  <AlertDialog.Body>
+                    <p>Oferta conține {pendingCount} materiale nevalidate, din toate foile selectate. Excelul va include cantitățile și prețurile curente, inclusiv valori zero pentru materialele fără prețuri completate.</p>
+                    <p className="mt-2">Materialele vor rămâne nevalidate și le poți verifica ulterior.</p>
+                  </AlertDialog.Body>
+                  <AlertDialog.Footer>
+                    <Button variant="secondary" slot="close">Continuă validarea</Button>
+                    <Button onPress={() => { void exportFile(true); }} isDisabled={busy || editing !== null || !oferta?.materialsReady || !materialCount}>Confirmă generarea</Button>
+                  </AlertDialog.Footer>
+                </AlertDialog.Dialog></AlertDialog.Container>
+              </AlertDialog.Backdrop>
+            </AlertDialog>
             {replacing && idGenerare && oferta && <ReplaceOfferMaterial
               key={JSON.stringify([idGenerare, replacing.sheetName, replacing.rand])} material={replacing}
               idGenerare={idGenerare} revision={oferta.revision} onClose={() => setReplacing(null)} />}
@@ -762,18 +823,34 @@ export default function OfertaFlow({ idOferta, detail = false }: { idOferta?: st
                       {!materialCount ? "Nu există materiale de exportat." : pendingCount ? `${pendingCount} materiale necesită validare` : "Toate materialele sunt validate"}
                     </p>
                   </div>
-                  {oferta.downloadUrl && !editing ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                  {oferta.downloadUrl && !editing && (
                     <a href={oferta.downloadUrl} download={oferta.excelOutput?.fileName} target="_blank" rel="noopener noreferrer">
                       <Button variant="secondary">
                         <Download className="size-4" />Descarcă Excel
                       </Button>
                     </a>
-                  ) : (
-                    <Button isDisabled={busy || editing !== null || !oferta.materialsReady || !materialCount || pendingCount > 0} onPress={() => { void exportFile(); }}>
-                      {activeStep === 5 ? <Spinner size="sm" /> : <Sheet className="size-4" />}Generează Excel
-                    </Button>
                   )}
+                    <Button isDisabled={busy || editing !== null || !oferta.materialsReady || !materialCount} onPress={() => { void exportFile(); }}>
+                      {activeStep === 5 ? <Spinner size="sm" /> : <Sheet className="size-4" />}{oferta.excelOutput ? "Regenerează Excel" : "Generează Excel"}
+                    </Button>
+                  </div>
                 </div>
+                {pendingCount > 0 && <div className="mb-5 flex flex-wrap items-end gap-3 rounded-xl border border-border bg-secondary/40 p-4">
+                  <label className="flex flex-col gap-1 text-sm font-medium">Calitate minimă (1–10)
+                    <Input type="number" min={1} max={10} step={0.1} aria-label="Calitate minimă pentru validare multiplă"
+                      className="w-28 border border-border" value={Number.isFinite(minimumQuality) ? minimumQuality : ""}
+                      disabled={busy || editing !== null} onChange={(event) => setMinimumQuality(event.target.value === "" ? NaN : Number(event.target.value))} />
+                  </label>
+                  <Button variant="secondary" isDisabled={busy || editing !== null || !oferta.materialsReady || !validQuality || !bulkValidationCount}
+                    onPress={() => { void bulkValidate(); }}>
+                    {bulkValidating ? <Spinner size="sm" /> : <Check className="size-4" />}
+                    Validează {bulkValidationCount ?? 0} materiale cu calitate ≥ {validQuality ? minimumQuality : "—"}
+                  </Button>
+                  <p role={validQuality ? "status" : "alert"} className={`w-full text-xs ${validQuality ? "text-muted-foreground" : "text-danger"}`}>
+                    {validQuality ? `Se aplică tuturor paginilor${activeSheet ? ` din foaia „${activeSheet}”` : ""}. Materialele fără potrivire, cu erori sau cu valori nevalide necesită verificare manuală.` : "Alege o calitate minimă între 1 și 10."}
+                  </p>
+                </div>}
                 {!oferta.materialsReady ? <PrepareMaterialPages key={oferta._id} idGenerare={oferta._id} /> : materialCount === 0 ? <p role="status" className="border-y border-border py-8 text-sm text-muted-foreground">Toate materialele au fost șterse din ofertă. Nu există materiale de exportat.</p> : onlyPending && pendingCount === 0 ? <p role="status" className="border-y border-border py-8 text-sm text-success">Nu mai există materiale de validat.</p> : (
                   <MaterialePages key={`${oferta._id}:${activeSheet}:${onlyPending}:${priceSort?.field}:${priceSort?.direction}`} idGenerare={oferta._id} sheetName={activeSheet} pendingOnly={onlyPending} busy={busy} editing={editing} setEditing={handleEditStart} onValidate={validate} onDelete={deleteMaterial} onReplace={setReplacing} sort={priceSort} onSort={changeSort} conversionRate={conversionRate} displayCurrency={displayCurrency} displayCurrencyFormatter={displayCurrencyFormatter} />
                 )}

@@ -117,6 +117,12 @@ export function materialTotal(material: MatchedMaterial) {
   return Number.isFinite(total) && total >= 0 ? total : 0;
 }
 
+export function canBulkValidate(material: MatchedMaterial, minimumQuality: number) {
+  return needsReview(material) && hasValidPrices(material) && material.cantitate > 0
+    && material.matchScore >= minimumQuality && material.descriereGasita.trim() !== ""
+    && material.descriereGasita !== "Nu a fost găsit în baza de date" && material.descriereGasita !== "Eroare la căutare";
+}
+
 export function summarizeMaterials(materials: MatchedMaterial[]) {
   return { pricingVersion: 1, materialCount: materials.length, pendingCount: materials.filter(needsReview).length,
     total: materials.reduce((total, material) => total + materialTotal(material), 0) };
@@ -134,9 +140,10 @@ export function getOfferProgress(oferta: Pick<Doc<"oferte">, "excelMapping" | "s
   return { status, materialCount, pendingCount } as const;
 }
 
-export function assertReadyForExport(materials: MatchedMaterial[] | undefined): asserts materials is MatchedMaterial[] {
+export function assertReadyForExport(materials: MatchedMaterial[] | undefined, allowUnvalidated = false): asserts materials is MatchedMaterial[] {
   if (!materials?.length) throw structureError();
-  if (materials.some(needsReview)) throw flowError("VALIDATION", "Valideaza toate materialele marcate înainte de export. Folosește filtrul pentru materiale nevalidate.");
+  if (materials.some((material) => !hasValidPrices(material))) throw flowError("VALIDATION", "Cantitățile și prețurile trebuie să fie numere finite, pozitive sau zero. Corectează valorile nevalide înainte de export.");
+  if (!allowUnvalidated && materials.some(needsReview)) throw flowError("VALIDATION", "Valideaza toate materialele marcate înainte de export sau confirmă generarea cu materiale nevalidate.");
   if (!Number.isFinite(materials.reduce((total, material) => total + material.cantitate * (salePrice(material) + material.manopera), 0))) {
     throw flowError("VALIDATION", "Totalul ofertei este prea mare. Verifică și corectează cantitățile și prețurile materialelor.");
   }
