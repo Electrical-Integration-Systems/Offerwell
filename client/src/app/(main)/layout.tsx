@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Header from "@/components/layout/header";
 
 export const metadata: Metadata = {
-  title: "Offerwell",
-  description: "",
+  title: {
+    default: "Materiale",
+    template: "%s | Offerwell",
+  },
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

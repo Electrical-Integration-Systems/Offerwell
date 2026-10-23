@@ -4,7 +4,7 @@ import ScrollToTop from "./scroll-to-top";
 import { BookOpen, Check, Copy, Eye, Lightbulb, Pencil, Search, Upload, type LucideIcon } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Ghid de utilizare | Offerwell",
+  title: "Ghid de utilizare",
   description: "Cum pregătești, verifici și descarci o ofertă în Offerwell. Pași simpli și sfaturi pentru ofertare.",
 };
 
