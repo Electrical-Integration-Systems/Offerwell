@@ -1,0 +1,21 @@
+{
+  "name": "docker",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun run dev.ts",
+    "down": "bun run dev.ts down",
+    "logs": "bun run dev.ts logs",
+    "status": "bun run dev.ts ps",
+    "check": "bun run dev.ts config",
+    "model": "bun run dev.ts model",
+    "search-key": "bun run dev.ts key",
+    "setup:local": "bun run setup-local.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^7"
+  }
+}

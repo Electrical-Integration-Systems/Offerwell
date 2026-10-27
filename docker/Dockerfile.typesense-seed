@@ -1,0 +1,9 @@
+FROM oven/bun:1
+
+WORKDIR /app/typesense
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile --production
+COPY src ./src
+COPY collections/materiale.csv ./collections/materiale.csv
+
+CMD ["bun", "run", "src/seed-dev.ts"]

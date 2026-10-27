@@ -5,9 +5,11 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { bulkValidationCandidates, getMaterials, getOwnedOferta } from "./queries";
 import { matchedMaterialValidator } from "../schema";
 import { assertReadyForExport, hasValidPrices, materialTotal, needsReview, normalizeMaterial, summarizeMaterials, MAX_EXCEL_BYTES, MAX_MATERIALS, type MatchedMaterial } from "./review";
-import { salePrice } from "../material_prices";
+import { salePrice, validSalePriceMultiplier } from "../material_prices";
 import { excelMappingValidator, extractionMappingChanged } from "./mapping";
 import { flowError, structureError } from "./errors";
+import { clearExtractedMaterials, migrateExtractedMaterials, storeExtractedMaterials } from "./extracted";
+import { RESTART_CONFIRMATION_TEXT } from "./restart_confirmation";
 
 async function clearMaterials(ctx: MutationCtx, oferta: Doc<"oferte">) {
   if (oferta.materialSummary) {
@@ -16,7 +18,14 @@ async function clearMaterials(ctx: MutationCtx, oferta: Doc<"oferte">) {
   }
 }
 
-async function storeMaterials(ctx: MutationCtx, id: Id<"oferte">, materials: MatchedMaterial[]) {
+async function ensureOfferAccess(ctx: MutationCtx, oferta: Doc<"oferte">) {
+  const access = await ctx.db.query("ofertaAcces").withIndex("by_oferta", (index) => index.eq("oferta", oferta._id)).unique();
+  if (!access) await ctx.db.insert("ofertaAcces", { oferta: oferta._id, user: oferta.user });
+}
+
+async function storeMaterials(ctx: MutationCtx, oferta: Doc<"oferte">, materials: MatchedMaterial[]) {
+  const id = oferta._id;
+  await ensureOfferAccess(ctx, oferta);
   materials = materials.map(normalizeMaterial);
   if (materials.length > MAX_MATERIALS || new Set(materials.map((material) => JSON.stringify([material.sheetName, material.rand]))).size !== materials.length) {
     throw flowError("RETRY", "Lista de materiale nu a putut fi salvată. Reia procesarea ofertei.");
@@ -28,6 +37,8 @@ async function storeMaterials(ctx: MutationCtx, id: Id<"oferte">, materials: Mat
 }
 
 async function ensureMaterials(ctx: MutationCtx, oferta: Doc<"oferte">) {
+  await ensureOfferAccess(ctx, oferta);
+  await migrateExtractedMaterials(ctx, oferta);
   if (oferta.materialSummary?.pricingVersion === 1) {
     if (oferta.materialSortingVersion !== 1) {
       const rows = await ctx.db.query("ofertaMateriale").withIndex("by_oferta_and_rand", (index) => index.eq("oferta", oferta._id)).collect();
@@ -40,7 +51,7 @@ async function ensureMaterials(ctx: MutationCtx, oferta: Doc<"oferte">) {
     return oferta.materialSummary;
   }
   if (!oferta.materialSummary) {
-    const summary = await storeMaterials(ctx, oferta._id, oferta.materialePotrivite ?? []);
+    const summary = await storeMaterials(ctx, oferta, oferta.materialePotrivite ?? []);
     await ctx.db.patch(oferta._id, { excelOutput: undefined, revision: (oferta.revision ?? 0) + 1 });
     return summary;
   }
@@ -59,7 +70,9 @@ export const prepareMaterialPagination = mutation({
   args: { idGenerare: v.id("oferte") },
   handler: async (ctx, args) => {
     const oferta = await getOwnedOferta(ctx, args.idGenerare);
+    await ensureOfferAccess(ctx, oferta);
     if (oferta.materialePotrivite || oferta.materialSummary) await ensureMaterials(ctx, oferta);
+    else await migrateExtractedMaterials(ctx, oferta);
     return null;
   },
 });
@@ -69,6 +82,9 @@ export const deleteOferta = mutation({
   handler: async (ctx, args) => {
     const oferta = await getOwnedOferta(ctx, args.idGenerare);
     await clearMaterials(ctx, oferta);
+    await clearExtractedMaterials(ctx, oferta);
+    const access = await ctx.db.query("ofertaAcces").withIndex("by_oferta", (index) => index.eq("oferta", oferta._id)).unique();
+    if (access) await ctx.db.delete(access._id);
     await ctx.db.delete(args.idGenerare);
     return null;
   },
@@ -79,8 +95,36 @@ async function getCurrentOferta(ctx: MutationCtx, args: { idGenerare: Id<"oferte
   if ((oferta.revision ?? 0) !== args.expectedRevision) {
     throw flowError("CONFLICT", "Oferta a fost modificată în altă sesiune. Verifică datele actualizate și încearcă din nou.");
   }
-  return oferta;
+  await migrateExtractedMaterials(ctx, oferta);
+  return oferta.materialeExtrase === undefined ? oferta : (await ctx.db.get(oferta._id))!;
 }
+
+export const restartOferta = mutation({
+  args: { idGenerare: v.id("oferte"), expectedRevision: v.number(), confirmation: v.string() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const oferta = await getOwnedOferta(ctx, args.idGenerare);
+    if ((oferta.revision ?? 0) !== args.expectedRevision) throw flowError("CONFLICT", "Oferta s-a modificat. Închide dialogul și verifică datele actualizate înainte de reluare.");
+    if (args.confirmation !== RESTART_CONFIRMATION_TEXT) throw flowError("VALIDATION", "Tastează exact textul de confirmare afișat.");
+    if (!await ctx.db.system.get(oferta.excelInput.content)) throw flowError("FILE_MISSING", "Fișierul Excel nu mai este disponibil. Încarcă-l într-o ofertă nouă.");
+    if (!process.env.GROQ_API_KEY) throw flowError("ANALYSIS_UNAVAILABLE", "Reanalizarea automată nu este configurată. Configurează cheia serviciului de analiză înainte de reluare. Rezultatele existente au fost păstrate.");
+
+    // Clear both legacy payloads and normalized rows atomically. Advancing the
+    // revision rejects writes/progress from any earlier analysis or matching run.
+    for await (const material of ctx.db.query("ofertaMateriale").withIndex("by_oferta_and_rand", (q) => q.eq("oferta", oferta._id))) {
+      await ctx.db.delete(material._id);
+    }
+    await clearExtractedMaterials(ctx, oferta);
+    await ctx.db.patch(oferta._id, {
+      excelMapping: undefined, sheetMappings: undefined,
+      materialeExtrase: undefined, extractedCount: undefined,
+      materialePotrivite: undefined, materialSummary: undefined, materialSortingVersion: undefined,
+      matchingProgress: undefined, excelOutput: undefined,
+      revision: args.expectedRevision + 1,
+    });
+    return null;
+  },
+});
 
 export const generateUploadUrl = mutation({
   args: {},
@@ -116,7 +160,7 @@ export const uploadInputExcel = mutation({
     if (args.selectedSheets && (!args.selectedSheets.length || args.selectedSheets.length > 100 || new Set(args.selectedSheets).size !== args.selectedSheets.length)) {
       throw flowError("INVALID_FILE", "Selectează între 1 și 100 de foi distincte.");
     }
-    return await ctx.db.insert("oferte", {
+    const id = await ctx.db.insert("oferte", {
       selectedSheets: args.selectedSheets,
         user: userId,
       revision: 0,
@@ -125,6 +169,8 @@ export const uploadInputExcel = mutation({
             fileName: args.fileName,
         },
     });
+    await ctx.db.insert("ofertaAcces", { oferta: id, user: userId });
+    return id;
   },
 })
 
@@ -145,12 +191,15 @@ export const updateExcelMapping = internalMutation({
       ? oferta.sheetMappings?.find((entry) => entry.sheetName === args.sheetName)?.mapping
       : oferta.excelMapping;
     const reextract = extractionMappingChanged(previousMapping, args.excelMapping);
-    if (reextract) await clearMaterials(ctx, oferta);
+    if (reextract) {
+      await clearMaterials(ctx, oferta);
+      await clearExtractedMaterials(ctx, oferta);
+    }
     await ctx.db.patch(args.idGenerare, {
       excelMapping: sheetMappings?.find((entry) => entry.sheetName === oferta.selectedSheets?.[0])?.mapping ?? args.excelMapping,
       sheetMappings,
       matchingProgress: undefined,
-      ...(reextract ? { materialSummary: undefined, materialeExtrase: undefined, materialePotrivite: undefined } : {}),
+      ...(reextract ? { materialSummary: undefined, materialeExtrase: undefined, extractedCount: undefined, materialePotrivite: undefined } : {}),
       excelOutput: undefined,
       revision: args.expectedRevision + 1,
     });
@@ -178,9 +227,10 @@ export const updateMaterialeExtrase = internalMutation({
       throw flowError("LIMIT", `Fișierul depășește limita de ${MAX_MATERIALS} materiale în total. Împarte lista în fișiere mai mici sau selectează mai puține foi.`);
     }
     await clearMaterials(ctx, oferta);
+    await storeExtractedMaterials(ctx, oferta, args.materialeExtrase);
     await ctx.db.patch(args.idGenerare, {
       materialSummary: undefined,
-      materialeExtrase: args.materialeExtrase,
+      materialeExtrase: undefined,
       matchingProgress: undefined,
       materialePotrivite: undefined,
       excelOutput: undefined,
@@ -193,7 +243,7 @@ export const startMatching = internalMutation({
   args: { idGenerare: v.id("oferte"), expectedRevision: v.number(), runId: v.string() },
   handler: async (ctx, args) => {
     const oferta = await getCurrentOferta(ctx, args);
-    const total = oferta.materialeExtrase?.length ?? 0;
+    const total = oferta.extractedCount ?? oferta.materialeExtrase?.length ?? 0;
     if (!total) throw structureError();
     await ctx.db.patch(args.idGenerare, { matchingProgress: { runId: args.runId, completed: 0, total, status: "running" } });
     return null;
@@ -230,7 +280,10 @@ export const updateMaterialePotrivite = internalMutation({
       throw flowError("CONFLICT", "Procesarea ofertei a fost reluată sau modificată în altă sesiune. Verifică progresul actualizat.");
     }
     await clearMaterials(ctx, oferta);
-    await storeMaterials(ctx, args.idGenerare, args.materialePotrivite);
+    await storeMaterials(ctx, oferta, args.materialePotrivite.map((material) => oferta.salePriceMultiplier === undefined ? material : {
+      ...material, salePriceMultiplier: oferta.salePriceMultiplier,
+      pretVanzare: material.pretAchizitie * oferta.salePriceMultiplier,
+    }));
     await ctx.db.patch(args.idGenerare, {
       excelOutput: undefined,
       matchingProgress: args.matchingRunId && oferta.matchingProgress ? { ...oferta.matchingProgress, status: "completed" as const } : undefined,
@@ -241,6 +294,7 @@ export const updateMaterialePotrivite = internalMutation({
 
 export const valideazaMaterial = mutation({
   args: {
+    salePriceMultiplier: v.optional(v.number()),
     idGenerare: v.id("oferte"),
     expectedRevision: v.number(),
     rand: v.number(),
@@ -252,6 +306,7 @@ export const valideazaMaterial = mutation({
   },
   handler: async (ctx, args) => {
     const oferta = await getCurrentOferta(ctx, args);
+    if (args.salePriceMultiplier !== undefined && !validSalePriceMultiplier(args.salePriceMultiplier)) throw flowError("VALIDATION", "Multiplicatorul trebuie să fie un număr finit mai mare decât zero.");
     if (!hasValidPrices(args)) throw flowError("VALIDATION", "Cantitatea și prețurile trebuie să fie numere finite, pozitive sau zero. Verifică valorile introduse.");
     const summary = await ensureMaterials(ctx, oferta);
     const material = await ctx.db.query("ofertaMateriale").withIndex("by_oferta_and_rand", (index) => index.eq("oferta", args.idGenerare).eq("rand", args.rand))
@@ -259,6 +314,7 @@ export const valideazaMaterial = mutation({
     if (!material) throw flowError("CONFLICT", "Materialul nu mai există în forma curentă a ofertei. Închide corectarea și verifică lista actualizată.");
     const updated = {
       ...material,
+      salePriceMultiplier: args.salePriceMultiplier,
       cantitate: args.cantitate,
       pretAchizitie: args.pretAchizitie,
       pretVanzare: salePrice(args),
@@ -266,12 +322,56 @@ export const valideazaMaterial = mutation({
       validated: true,
     };
     await ctx.db.patch(material._id, { cantitate: updated.cantitate, pretAchizitie: updated.pretAchizitie,
+      salePriceMultiplier: updated.salePriceMultiplier,
       pretVanzare: updated.pretVanzare, manopera: updated.manopera, validated: true, pending: false, totalVanzareManopera: materialTotal(updated) });
     await ctx.db.patch(args.idGenerare, {
       materialSummary: { ...summary, pendingCount: summary.pendingCount - (material.pending ? 1 : 0),
         total: summary.total - materialTotal(material) + materialTotal(updated) },
       excelOutput: undefined,
       revision: args.expectedRevision + 1,
+    });
+    return null;
+  },
+});
+
+export const aplicaMultiplicatorVanzare = mutation({
+  args: { idGenerare: v.id("oferte"), expectedRevision: v.number(), salePriceMultiplier: v.number() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const oferta = await getCurrentOferta(ctx, args);
+    if (!validSalePriceMultiplier(args.salePriceMultiplier)) throw flowError("VALIDATION", "Multiplicatorul trebuie să fie un număr finit mai mare decât zero.");
+    if (oferta.matchingProgress?.status === "running") throw flowError("CONFLICT", "Așteaptă finalizarea procesării înainte de modificarea prețurilor.");
+    if (!oferta.materialSummary && !oferta.materialePotrivite?.length) throw flowError("VALIDATION", "Procesează materialele înainte de modificarea prețurilor.");
+    const summary = await ensureMaterials(ctx, oferta);
+    const rows = await ctx.db.query("ofertaMateriale").withIndex("by_oferta_and_rand", (q) => q.eq("oferta", oferta._id)).collect();
+    let total = 0;
+    for (const material of rows) {
+      const updated = { ...material, salePriceMultiplier: args.salePriceMultiplier,
+        pretVanzare: material.pretAchizitie * args.salePriceMultiplier };
+      if (!hasValidPrices(updated)) throw flowError("VALIDATION", `Prețul calculat pentru rândul ${material.rand} nu este valid. Verifică prețul de achiziție și multiplicatorul.`);
+      total += materialTotal(updated);
+      await ctx.db.patch(material._id, { salePriceMultiplier: args.salePriceMultiplier,
+        pretVanzare: updated.pretVanzare, totalVanzareManopera: materialTotal(updated) });
+    }
+    if (!Number.isFinite(total)) throw flowError("VALIDATION", "Totalul calculat este prea mare. Alege un multiplicator mai mic.");
+    await ctx.db.patch(oferta._id, { salePriceMultiplier: args.salePriceMultiplier,
+      materialSummary: { ...summary, total }, excelOutput: undefined, revision: args.expectedRevision + 1 });
+    return null;
+  },
+});
+
+export const nevalideazaMaterial = mutation({
+  args: { idGenerare: v.id("oferte"), expectedRevision: v.number(), sheetName: v.optional(v.string()), rand: v.number() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const oferta = await getCurrentOferta(ctx, args);
+    const summary = await ensureMaterials(ctx, oferta);
+    const material = await ctx.db.query("ofertaMateriale").withIndex("by_oferta_and_sheet_and_rand", (q) => q.eq("oferta", args.idGenerare).eq("sheetName", args.sheetName).eq("rand", args.rand)).unique();
+    if (!material || material.validated !== true) throw flowError("CONFLICT", "Materialul nu mai este validat. Verifică oferta actualizată.");
+    await ctx.db.patch(material._id, { validated: false, requiresValidation: true, pending: true });
+    await ctx.db.patch(oferta._id, {
+      materialSummary: { ...summary, pendingCount: summary.pendingCount + (material.pending ? 0 : 1) },
+      excelOutput: undefined, revision: args.expectedRevision + 1,
     });
     return null;
   },
@@ -297,10 +397,11 @@ export const schimbaMaterial = mutation({
   args: {
     idGenerare: v.id("oferte"), expectedRevision: v.number(), rand: v.number(), sheetName: v.optional(v.string()),
     descriere: v.string(), pretAchizitie: v.number(), pretVanzare: v.number(), manopera: v.number(),
+    catalogMaterialId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const oferta = await getCurrentOferta(ctx, args);
-    await ensureMaterials(ctx, oferta);
+    const summary = await ensureMaterials(ctx, oferta);
     const material = await ctx.db.query("ofertaMateriale")
       .withIndex("by_oferta_and_rand", (index) => index.eq("oferta", args.idGenerare).eq("rand", args.rand))
       .filter((q) => q.eq(q.field("sheetName"), args.sheetName)).unique();
@@ -308,14 +409,15 @@ export const schimbaMaterial = mutation({
     if (!args.descriere.trim() || args.descriere.length > 10000 || !hasValidPrices({ ...args, cantitate: material.cantitate })) {
       throw flowError("VALIDATION", "Materialul selectat are date sau prețuri invalide. Alege alt material.");
     }
-    const updated = normalizeMaterial({ ...material, descriereGasita: args.descriere, pretAchizitie: args.pretAchizitie,
-      pretVanzare: salePrice(args), manopera: args.manopera, validated: false, requiresValidation: true });
-    await ctx.db.patch(material._id, { descriereGasita: updated.descriereGasita, pretAchizitie: updated.pretAchizitie,
+    const salePriceMultiplier = material.salePriceMultiplier ?? oferta.salePriceMultiplier;
+    const updated = normalizeMaterial({ ...material, salePriceMultiplier, descriereGasita: args.descriere, pretAchizitie: args.pretAchizitie,
+      pretVanzare: salePrice({ ...args, salePriceMultiplier }), manopera: args.manopera, validated: false, requiresValidation: true });
+    if (!hasValidPrices(updated)) throw flowError("VALIDATION", "Prețurile calculate nu sunt valide.");
+    await ctx.db.patch(material._id, { salePriceMultiplier, catalogMaterialId: args.catalogMaterialId, descriereGasita: updated.descriereGasita, pretAchizitie: updated.pretAchizitie,
       pretVanzare: updated.pretVanzare, manopera: updated.manopera, matchScore: updated.matchScore,
       matchedTokens: updated.matchedTokens, validated: false, requiresValidation: true, pending: true, totalVanzareManopera: materialTotal(updated) });
-    const currentOferta = await ctx.db.get(args.idGenerare);
     await ctx.db.patch(args.idGenerare, {
-      materialSummary: summarizeMaterials(await getMaterials(ctx, currentOferta!) ?? []),
+      materialSummary: { ...summary, pendingCount: summary.pendingCount + (material.pending ? 0 : 1), total: summary.total - materialTotal(material) + materialTotal(updated) },
       excelOutput: undefined, revision: args.expectedRevision + 1,
     });
     return null;
@@ -331,17 +433,18 @@ export const stergeMaterial = mutation({
   },
   handler: async (ctx, args) => {
     const oferta = await getCurrentOferta(ctx, args);
-    await ensureMaterials(ctx, oferta);
+    const summary = await ensureMaterials(ctx, oferta);
     const material = await ctx.db.query("ofertaMateriale")
       .withIndex("by_oferta_and_rand", (index) => index.eq("oferta", args.idGenerare).eq("rand", args.rand))
       .filter((q) => q.eq(q.field("sheetName"), args.sheetName)).unique();
     if (!material) throw flowError("CONFLICT", "Materialul nu mai există în ofertă. Verifică lista actualizată.");
     await ctx.db.delete(material._id);
-    const currentOferta = await ctx.db.get(args.idGenerare);
-    const remaining = await getMaterials(ctx, currentOferta!) ?? [];
+    const extracted = await ctx.db.query("ofertaExtrase").withIndex("by_oferta_and_sheet_and_rand", (index) => index.eq("oferta", args.idGenerare).eq("sheetName", args.sheetName).eq("rand", args.rand)).unique();
+    if (extracted) await ctx.db.delete(extracted._id);
     await ctx.db.patch(args.idGenerare, {
-      materialSummary: summarizeMaterials(remaining),
-      materialeExtrase: oferta.materialeExtrase?.filter((row) => row.rand !== args.rand || row.sheetName !== args.sheetName),
+      materialSummary: { ...summary, materialCount: summary.materialCount - 1, pendingCount: summary.pendingCount - (material.pending ? 1 : 0), total: summary.total - materialTotal(material) },
+      materialeExtrase: undefined,
+      extractedCount: (oferta.extractedCount ?? oferta.materialeExtrase?.length ?? 0) - (extracted ? 1 : 0),
       excelOutput: undefined,
       revision: args.expectedRevision + 1,
     });

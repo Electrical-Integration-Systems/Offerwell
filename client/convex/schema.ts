@@ -4,6 +4,8 @@ import { v } from "convex/values";
 import { excelMappingValidator } from "./oferte/mapping";
 
 export const matchedMaterialValidator = v.object({
+    salePriceMultiplier: v.optional(v.number()),
+    catalogMaterialId: v.optional(v.string()),
     sheetName: v.optional(v.string()),
     rand: v.number(),
     descriereOriginala: v.string(),
@@ -21,7 +23,17 @@ export const matchedMaterialValidator = v.object({
   
 const schema = defineSchema({
   ...authTables,
+    ofertaExtrase: defineTable({
+      oferta: v.id("oferte"), position: v.number(), sheetName: v.optional(v.string()), rand: v.number(),
+      descriere: v.string(), cantitate: v.number(), unitate: v.string(),
+    }).index("by_oferta_and_rand", ["oferta", "rand"])
+      .index("by_oferta_and_position", ["oferta", "position"])
+      .index("by_oferta_and_sheet_and_rand", ["oferta", "sheetName", "rand"]),
+    ofertaAcces: defineTable({ oferta: v.id("oferte"), user: v.id("users") })
+      .index("by_oferta", ["oferta"]),
     oferte: defineTable({
+        salePriceMultiplier: v.optional(v.number()),
+        extractedCount: v.optional(v.number()),
         user: v.id("users"),
         materialSortingVersion: v.optional(v.number()),
         matchingProgress: v.optional(v.object({ runId: v.string(), completed: v.number(), total: v.number(),
@@ -55,6 +67,26 @@ const schema = defineSchema({
         totalVanzareManopera: v.optional(v.number()),
     }))
     .index("by_oferta_and_rand", ["oferta", "rand"])
+    .index("by_oferta_and_sheet_and_pretAchizitie", ["oferta", "sheetName", "pretAchizitie", "rand"])
+    .index("by_oferta_and_sheet_and_pending_and_pretAchizitie", ["oferta", "sheetName", "pending", "pretAchizitie", "rand"])
+    .index("by_oferta_and_pending_and_pretAchizitie", ["oferta", "pending", "pretAchizitie", "rand"])
+    .index("by_oferta_and_sheet_and_pretVanzare", ["oferta", "sheetName", "pretVanzare", "rand"])
+    .index("by_oferta_and_sheet_and_pending_and_pretVanzare", ["oferta", "sheetName", "pending", "pretVanzare", "rand"])
+    .index("by_oferta_and_pending_and_pretVanzare", ["oferta", "pending", "pretVanzare", "rand"])
+    .index("by_oferta_and_sheet_and_manopera", ["oferta", "sheetName", "manopera", "rand"])
+    .index("by_oferta_and_sheet_and_pending_and_manopera", ["oferta", "sheetName", "pending", "manopera", "rand"])
+    .index("by_oferta_and_pending_and_manopera", ["oferta", "pending", "manopera", "rand"])
+    .index("by_oferta_and_sheet_and_cantitate", ["oferta", "sheetName", "cantitate", "rand"])
+    .index("by_oferta_and_sheet_and_pending_and_cantitate", ["oferta", "sheetName", "pending", "cantitate", "rand"])
+    .index("by_oferta_and_pending_and_cantitate", ["oferta", "pending", "cantitate", "rand"])
+    .index("by_oferta_and_sheet_and_matchScore", ["oferta", "sheetName", "matchScore", "rand"])
+    .index("by_oferta_and_sheet_and_pending_and_matchScore", ["oferta", "sheetName", "pending", "matchScore", "rand"])
+    .index("by_oferta_and_pending_and_matchScore", ["oferta", "pending", "matchScore", "rand"])
+    .index("by_oferta_and_sheet_and_totalVanzareManopera", ["oferta", "sheetName", "totalVanzareManopera", "rand"])
+    .index("by_oferta_and_sheet_and_pending_and_totalVanzareManopera", ["oferta", "sheetName", "pending", "totalVanzareManopera", "rand"])
+    .index("by_oferta_and_pending_and_totalVanzareManopera", ["oferta", "pending", "totalVanzareManopera", "rand"])
+    .index("by_oferta_and_sheet_and_rand", ["oferta", "sheetName", "rand"])
+    .index("by_oferta_and_sheet_and_pending_and_rand", ["oferta", "sheetName", "pending", "rand"])
     .index("by_oferta_and_pretAchizitie", ["oferta", "pretAchizitie", "rand"])
     .index("by_oferta_and_pretVanzare", ["oferta", "pretVanzare", "rand"])
     .index("by_oferta_and_manopera", ["oferta", "manopera", "rand"])

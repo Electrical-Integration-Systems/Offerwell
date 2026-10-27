@@ -5,12 +5,13 @@ export const typesenseClient = new Typesense.Client({
   nodes: [
     {
       host: process.env.NEXT_PUBLIC_TYPESENSE_HOST || "typesense.bmseis.software",
-      port: 443,
-      protocol: "https",
+      port: Number(process.env.NEXT_PUBLIC_TYPESENSE_PORT || "443"),
+      protocol: process.env.NEXT_PUBLIC_TYPESENSE_PROTOCOL || "https",
     },
   ],
   apiKey: process.env.TYPESENSE_API_KEY || "",
-  connectionTimeoutSeconds: 2,
+  // Writes can generate embeddings, especially slowly on a cold local CPU model.
+  connectionTimeoutSeconds: 30,
 });
 
 /**

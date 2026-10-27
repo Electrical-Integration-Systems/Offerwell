@@ -4,9 +4,9 @@ import { type MaterialHit } from "./types";
 const typesenseClient = new Typesense.Client({
   nodes: [
     {
-      host: "typesense.bmseis.software",
-      port: 443,
-      protocol: "https",
+      host: process.env.TYPESENSE_HOST || "typesense.bmseis.software",
+      port: Number(process.env.TYPESENSE_PORT || "443"),
+      protocol: process.env.TYPESENSE_PROTOCOL || "https",
     },
   ],
   apiKey: process.env.TYPESENSE_SEARCH_KEY!,

@@ -15,6 +15,15 @@ bun install
 
 ## To run:
 
+For local development, use the host, port, protocol, and development admin key
+from [.env.example](./.env.example), and follow the
+[local stack setup](../docker/README.md). For production HTTPS connections, set
+`TYPESENSE_PROTOCOL=https` and `TYPESENSE_PORT=443` (also the defaults when unset).
+The upload command deletes and recreates `materiale` at the configured host.
+The development Compose stack automatically initializes
+`collections/materiale.csv` during startup without deleting existing data.
+Running this standalone upload command is not required for development startup.
+
 ```bash
 bun run upload
 

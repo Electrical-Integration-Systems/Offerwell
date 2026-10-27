@@ -325,6 +325,7 @@ export const cautaSiPopuleazaPreturi = action({
               cantitate: mat.cantitate,
               unitate: mat.unitate,
               descriereGasita: chosenMaterial.descriere,
+              catalogMaterialId: chosenMaterial.id,
               matchScore: calculateMatchQuality(mat.descriere, matchedTokens.length, matchedTokens),
               matchedTokens,
               requiresValidation: !isExactMatch(mat.descriere, chosenMaterial.descriere)

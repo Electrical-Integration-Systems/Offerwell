@@ -3,9 +3,10 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { paginationOptsValidator } from "convex/server";
-import { canBulkValidate, getOfferProgress, normalizeMaterial, summarizeMaterials, type MatchedMaterial } from "./review";
+import { canBulkValidate, getOfferProgress, hasValidPrices, normalizeMaterial, summarizeMaterials, type MatchedMaterial } from "./review";
 import { flowError } from "./errors";
 import { isCurrentExcelOutput } from "./export_format";
+import { getExtractedMaterials } from "./extracted";
 
 export async function getOwnedOferta(ctx: QueryCtx, idGenerare: Id<"oferte">): Promise<Doc<"oferte">> {
   const userId = await getAuthUserId(ctx);
@@ -25,12 +26,28 @@ export async function getMaterials(ctx: QueryCtx, oferta: Doc<"oferte">): Promis
   });
 }
 
+// Page authorization reads a small, stable ownership record rather than the
+// extracted Excel payload and frequently changing totals/progress on the offer.
+export async function assertOfertaAccess(ctx: QueryCtx, idGenerare: Id<"oferte">) {
+  const userId = await getAuthUserId(ctx);
+  if (userId === null) throw flowError("AUTH", "Autentificarea este necesară. Conectează-te din nou pentru a continua.");
+  const access = await ctx.db.query("ofertaAcces").withIndex("by_oferta", (index) => index.eq("oferta", idGenerare)).unique();
+  if (!access) {
+    // Existing offers retain their ownership checks until the UI prepares them.
+    await getOwnedOferta(ctx, idGenerare);
+  } else if (access.user !== userId) {
+    throw flowError("UNAVAILABLE", "Oferta nu este disponibila pentru acest cont. Revino la lista de oferte.");
+  }
+}
+
 async function offerSummary(ctx: QueryCtx, oferta: Doc<"oferte">) {
+  const access = await ctx.db.query("ofertaAcces").withIndex("by_oferta", (index) => index.eq("oferta", oferta._id)).unique();
   const summary = oferta.materialSummary?.pricingVersion === 1
     ? oferta.materialSummary
     : summarizeMaterials(await getMaterials(ctx, oferta) ?? []);
   return {
     _id: oferta._id, revision: oferta.revision ?? 0,
+    salePriceMultiplier: oferta.salePriceMultiplier ?? 1.25,
     excelInput: oferta.excelInput, excelMapping: oferta.excelMapping,
     selectedSheets: oferta.selectedSheets, sheetMappings: oferta.sheetMappings,
     excelOutput: oferta.excelOutput,
@@ -39,10 +56,11 @@ async function offerSummary(ctx: QueryCtx, oferta: Doc<"oferte">) {
     ...getOfferProgress({ ...oferta, materialSummary: oferta.materialSummary ? summary : undefined }),
     total: summary.total,
     matchingProgress: oferta.matchingProgress,
-    extractedCount: oferta.materialeExtrase?.length ?? 0,
-    hasExtracted: Boolean(oferta.materialeExtrase?.length),
+    extractedCount: oferta.extractedCount ?? oferta.materialeExtrase?.length ?? 0,
+    hasExtracted: Boolean(oferta.extractedCount ?? oferta.materialeExtrase?.length),
     hasMatched: Boolean(oferta.materialSummary || oferta.materialePotrivite?.length),
-    materialsReady: oferta.materialSummary?.pricingVersion === 1 && oferta.materialSortingVersion === 1,
+    materialsReady: oferta.materialSummary?.pricingVersion === 1 && oferta.materialSortingVersion === 1 && oferta.materialeExtrase === undefined,
+    accessReady: access?.user === oferta.user,
   };
 }
 
@@ -50,7 +68,7 @@ export const getGenerare = internalQuery({
   args: { idGenerare: v.id("oferte") },
   handler: async (ctx, args): Promise<Doc<"oferte">> => {
     const oferta = await getOwnedOferta(ctx, args.idGenerare);
-    return { ...oferta, materialePotrivite: await getMaterials(ctx, oferta) };
+    return { ...oferta, materialeExtrase: await getExtractedMaterials(ctx, oferta), materialePotrivite: await getMaterials(ctx, oferta) };
   },
 });
 
@@ -61,15 +79,24 @@ export const listMateriale = query({
     sortDirection: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
   },
   handler: async (ctx, args) => {
-    await getOwnedOferta(ctx, args.idGenerare);
+    await assertOfertaAccess(ctx, args.idGenerare);
     const rows = ctx.db.query("ofertaMateriale");
     const indexed = args.sortBy
-      ? rows.withIndex(`by_oferta_and_${args.sortBy}`, (index) => index.eq("oferta", args.idGenerare)).order(args.sortDirection ?? "asc")
+      ? (args.sheetName !== undefined
+        ? args.pendingOnly
+          ? rows.withIndex(`by_oferta_and_sheet_and_pending_and_${args.sortBy}`, (index) => index.eq("oferta", args.idGenerare).eq("sheetName", args.sheetName).eq("pending", true))
+          : rows.withIndex(`by_oferta_and_sheet_and_${args.sortBy}`, (index) => index.eq("oferta", args.idGenerare).eq("sheetName", args.sheetName))
+        : args.pendingOnly
+          ? rows.withIndex(`by_oferta_and_pending_and_${args.sortBy}`, (index) => index.eq("oferta", args.idGenerare).eq("pending", true))
+          : rows.withIndex(`by_oferta_and_${args.sortBy}`, (index) => index.eq("oferta", args.idGenerare))).order(args.sortDirection ?? "asc")
+      : args.sheetName !== undefined
+      ? args.pendingOnly
+        ? rows.withIndex("by_oferta_and_sheet_and_pending_and_rand", (index) => index.eq("oferta", args.idGenerare).eq("sheetName", args.sheetName).eq("pending", true))
+        : rows.withIndex("by_oferta_and_sheet_and_rand", (index) => index.eq("oferta", args.idGenerare).eq("sheetName", args.sheetName))
       : args.pendingOnly
       ? rows.withIndex("by_oferta_and_pending_and_rand", (index) => index.eq("oferta", args.idGenerare).eq("pending", true))
       : rows.withIndex("by_oferta_and_rand", (index) => index.eq("oferta", args.idGenerare));
-    const pending = args.sortBy && args.pendingOnly ? indexed.filter((q) => q.eq(q.field("pending"), true)) : indexed;
-    const result = await (args.sheetName ? pending.filter((q) => q.eq(q.field("sheetName"), args.sheetName)) : pending).paginate(args.paginationOpts);
+    const result = await indexed.paginate(args.paginationOpts);
     return { ...result, page: result.page.map(normalizeMaterial) };
   },
 });
@@ -78,16 +105,28 @@ export async function bulkValidationCandidates(ctx: QueryCtx, idGenerare: Id<"of
   if (!Number.isFinite(minimumQuality) || minimumQuality < 1 || minimumQuality > 10) {
     throw flowError("VALIDATION", "Alege o calitate minimă între 1 și 10.");
   }
-  const pending = ctx.db.query("ofertaMateriale").withIndex("by_oferta_and_pending_and_rand", (index) => index.eq("oferta", idGenerare).eq("pending", true));
-  const rows = await (sheetName ? pending.filter((q) => q.eq(q.field("sheetName"), sheetName)) : pending).collect();
+  const rows = await (sheetName !== undefined
+    ? ctx.db.query("ofertaMateriale").withIndex("by_oferta_and_sheet_and_pending_and_rand", (index) => index.eq("oferta", idGenerare).eq("sheetName", sheetName).eq("pending", true))
+    : ctx.db.query("ofertaMateriale").withIndex("by_oferta_and_pending_and_rand", (index) => index.eq("oferta", idGenerare).eq("pending", true))).collect();
   return rows.map(normalizeMaterial).filter((material) => canBulkValidate(material, minimumQuality));
 }
 
 export const countBulkValidation = query({
   args: { idGenerare: v.id("oferte"), minimumQuality: v.number(), sheetName: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    await getOwnedOferta(ctx, args.idGenerare);
+    await assertOfertaAccess(ctx, args.idGenerare);
     return (await bulkValidationCandidates(ctx, args.idGenerare, args.minimumQuality, args.sheetName)).length;
+  },
+});
+
+export const getCatalogMaterial = query({
+  args: { idGenerare: v.id("oferte"), expectedRevision: v.number(), sheetName: v.optional(v.string()), rand: v.number() },
+  handler: async (ctx, args) => {
+    const oferta = await getOwnedOferta(ctx, args.idGenerare);
+    if ((oferta.revision ?? 0) !== args.expectedRevision) throw flowError("CONFLICT", "Oferta s-a modificat. Închide dialogul și verifică prețurile actualizate.");
+    const material = await ctx.db.query("ofertaMateriale").withIndex("by_oferta_and_sheet_and_rand", (q) => q.eq("oferta", args.idGenerare).eq("sheetName", args.sheetName).eq("rand", args.rand)).unique();
+    if (!material || material.validated !== true || !hasValidPrices(material)) throw flowError("VALIDATION", "Doar materialele validate, cu prețuri valide, pot fi salvate în catalog.");
+    return normalizeMaterial(material);
   },
 });
 

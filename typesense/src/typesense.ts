@@ -6,8 +6,8 @@ const client = new Typesense.Client({
     nodes: [
         {
             host: process.env.TYPESENSE_HOST ? process.env.TYPESENSE_HOST : "",
-            port: 443,
-            protocol: "https"
+            port: Number(process.env.TYPESENSE_PORT || "443"),
+            protocol: process.env.TYPESENSE_PROTOCOL || "https"
         }
     ],
     apiKey: process.env.TYPESENSE_API_KEY ? process.env.TYPESENSE_API_KEY : "",

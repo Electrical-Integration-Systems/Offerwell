@@ -40,7 +40,9 @@ test.each([false, true])("deletes only the selected sheet row, updates totals an
   await user.mutation(api.oferte.mutations.stergeMaterial, { idGenerare, expectedRevision: 4, rand: 2, sheetName: first.sheetName });
   const offer = await t.run((ctx) => ctx.db.get(idGenerare));
   expect(offer!.materialSummary).toEqual({ pricingVersion: 1, materialCount: 1, pendingCount: 0, total: 40 });
-  expect(offer!.materialeExtrase?.map((m) => m.sheetName)).toEqual([second.sheetName]);
+  expect(offer!.materialeExtrase).toBeUndefined();
+  expect(offer!.extractedCount).toBe(1);
+  expect((await t.run((ctx) => ctx.db.query("ofertaExtrase").collect())).map((m) => m.sheetName)).toEqual([second.sheetName]);
   expect(offer!.excelOutput).toBeUndefined();
   expect(offer!.revision).toBe(5);
   const rows = await t.run((ctx) => ctx.db.query("ofertaMateriale").collect());

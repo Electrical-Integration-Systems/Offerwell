@@ -6,6 +6,7 @@ import schema from "../schema";
 import { api, internal } from "../_generated/api";
 import { validateExcelMapping, type ExcelMapping } from "./mapping";
 import { CURRENT_EXPORT_FORMAT } from "./export_format";
+import { getExtractedMaterials } from "./extracted";
 
 const modules = import.meta.glob("/convex/**/*.ts");
 vi.mock("../typesense", () => ({ blendSearch: vi.fn(), textSearch: vi.fn() }));
@@ -66,7 +67,7 @@ test("manual correction clears obsolete results and extracts the Id Articol desc
   expect(after.excelOutput).toBeUndefined();
   expect(await t.run((ctx) => ctx.db.query("ofertaMateriale").collect())).toEqual([]);
   expect(await user.action(api.oferte.actions.extrageMateriale, { idGenerare: offerId })).toEqual({ success: true, count: 2 });
-  const result = await t.run((ctx) => ctx.db.get(offerId));
+  const result = await t.run(async (ctx) => { const offer = (await ctx.db.get(offerId))!; return { ...offer, materialeExtrase: await getExtractedMaterials(ctx, offer) }; });
   expect(result?.materialeExtrase).toEqual([
     { rand: 3, descriere: "Cablu 3x2,5", cantitate: 100, unitate: "m" },
     { rand: 4, descriere: "Tub corugat", cantitate: 20, unitate: "m" },
@@ -113,7 +114,8 @@ test.each([{ coloanaSfarsitDate: "E" }, { valuta: "EUR" }, { coloanaSfarsitDate:
   });
   expect(saved).toMatchObject(change);
   const after = await t.run((ctx) => ctx.db.get(offerId));
-  expect(after?.materialeExtrase).toEqual(before?.materialeExtrase);
+  expect(after?.materialeExtrase).toBeUndefined();
+  expect(await t.run(async (ctx) => getExtractedMaterials(ctx, (await ctx.db.get(offerId))!))).toEqual(before?.materialeExtrase);
   expect(after?.materialSummary).toEqual(before?.materialSummary);
   expect(await t.run((ctx) => ctx.db.query("ofertaMateriale").collect())).toEqual(rowsBefore);
   expect(after?.excelOutput).toBeUndefined();

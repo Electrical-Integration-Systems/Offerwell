@@ -128,12 +128,13 @@ export function summarizeMaterials(materials: MatchedMaterial[]) {
     total: materials.reduce((total, material) => total + materialTotal(material), 0) };
 }
 
-export function getOfferProgress(oferta: Pick<Doc<"oferte">, "excelMapping" | "selectedSheets" | "sheetMappings" | "materialeExtrase" | "materialePotrivite" | "excelOutput" | "materialSummary">) {
-  const materialCount = oferta.materialSummary?.materialCount ?? oferta.materialePotrivite?.length ?? oferta.materialeExtrase?.length ?? 0;
+export function getOfferProgress(oferta: Pick<Doc<"oferte">, "excelMapping" | "selectedSheets" | "sheetMappings" | "materialeExtrase" | "extractedCount" | "materialePotrivite" | "excelOutput" | "materialSummary">) {
+  const extractedCount = oferta.extractedCount ?? oferta.materialeExtrase?.length ?? 0;
+  const materialCount = oferta.materialSummary?.materialCount ?? oferta.materialePotrivite?.length ?? extractedCount;
   const pendingCount = oferta.materialSummary?.pendingCount ?? oferta.materialePotrivite?.filter(needsReview).length ?? 0;
   const hasMappings = Boolean(oferta.excelMapping) && !oferta.selectedSheets?.some((name) => !oferta.sheetMappings?.some((entry) => entry.sheetName === name));
   const status = !hasMappings ? "analysis"
-    : !oferta.materialeExtrase?.length && !oferta.materialSummary ? "extraction"
+    : !extractedCount && !oferta.materialSummary ? "extraction"
     : !oferta.materialSummary && !oferta.materialePotrivite?.length ? "matching"
     : pendingCount > 0 ? "validation"
     : isCurrentExcelOutput(oferta.excelOutput) ? "completed" : "export";

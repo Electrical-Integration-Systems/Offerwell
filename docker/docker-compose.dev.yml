@@ -1,0 +1,62 @@
+name: offerwell-dev
+
+services:
+  typesense:
+    image: typesense/typesense:27.1
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${TYPESENSE_DEV_PORT:-8108}:8108"
+    volumes:
+      - typesense-data:/data
+    environment:
+      TYPESENSE_API_KEY: ${TYPESENSE_DEV_API_KEY:?Set TYPESENSE_DEV_API_KEY in .env.dev}
+    command: ["--data-dir=/data", "--enable-cors"]
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${OLLAMA_DEV_PORT:-11435}:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+
+  typesense-seed:
+    build:
+      context: ../typesense
+      dockerfile: ../docker/Dockerfile.typesense-seed
+    restart: "no"
+    depends_on:
+      - typesense
+      - ollama
+    environment:
+      OFFERWELL_DEV_SEED: "true"
+      TYPESENSE_DEV_API_KEY: ${TYPESENSE_DEV_API_KEY:?Set TYPESENSE_DEV_API_KEY in .env.dev}
+    volumes:
+      - typesense-seed-data:/state
+      - ../typesense/collections/materiale.csv:/app/typesense/collections/materiale.csv:ro
+      - ../client/convex/lib/material_description.ts:/app/client/convex/lib/material_description.ts:ro
+
+  laya:
+    build:
+      context: .
+      dockerfile: Dockerfile.laya.dev
+    restart: unless-stopped
+    working_dir: /app
+    ports:
+      - "127.0.0.1:${LAYA_DEV_PORT:-8081}:8000"
+    volumes:
+      - laya-data:/root/.cache/huggingface
+    environment:
+      HF_HOME: /root/.cache/huggingface
+      PYTHONUNBUFFERED: "1"
+      USE_TF: "0"
+      LAYA_SERVE_BACKEND: laya
+      LAYA_SERVE_DEVICE: cpu
+      LAYA_SERVE_PRELOAD: "true"
+      LAYA_SERVE_API_KEY: ${LAYA_DEV_API_KEY:?Set LAYA_DEV_API_KEY in .env.dev}
+
+volumes:
+  typesense-data:
+  ollama-data:
+  laya-data:
+  typesense-seed-data:

@@ -3,6 +3,7 @@ import { expect, test, vi } from "vitest";
 import { convexTest } from "convex-test";
 import * as XLSX from "xlsx";
 import schema from "../schema";
+import { getExtractedMaterials } from "./extracted";
 import { api, internal } from "../_generated/api";
 import { blendSearch } from "../typesense";
 import { alegePret } from "../laya";
@@ -57,7 +58,9 @@ test("extracts selected sheets with independent mappings and preserves duplicate
   await user.action(api.oferte.actions.analizaExcelInput, { idGenerare });
   expect(await user.action(api.oferte.actions.extrageMateriale, { idGenerare })).toEqual({ success: true, count: 3 });
   const offer = await t.run((ctx) => ctx.db.get(idGenerare));
-  expect(offer?.materialeExtrase).toEqual([
+  expect(offer?.materialeExtrase).toBeUndefined();
+  expect(offer?.extractedCount).toBe(3);
+  expect(await t.run(async (ctx) => getExtractedMaterials(ctx, (await ctx.db.get(idGenerare))!))).toEqual([
     { sheetName: "Electrice", rand: 2, descriere: "Cablu", cantitate: 2, unitate: "m" },
     { sheetName: "Electrice", rand: 3, descriere: "Tub", cantitate: 3, unitate: "m" },
     { sheetName: "Instalații", rand: 2, descriere: "Robinet", cantitate: 4, unitate: "buc" },
@@ -232,7 +235,7 @@ test("matching strips units for search and AI but keeps the original description
   expect(alegePret).toHaveBeenCalledWith("Cablu 3x2,5", [expect.objectContaining({ descriere: "Cablu 3x2,5" })]);
   const rows = await user.query(api.oferte.queries.listMateriale, { idGenerare, sheetName: "Electrice", pendingOnly: false, paginationOpts: { numItems: 10, cursor: null } });
   expect(rows.page[0]).toMatchObject({ descriereOriginala: original, descriereGasita: reference, unitate: "m", cantitate: 3, matchScore: 10, requiresValidation: false });
-  expect((await t.run((ctx) => ctx.db.get(idGenerare)))?.materialeExtrase?.[0].descriere).toBe(original);
+  expect((await t.run(async (ctx) => getExtractedMaterials(ctx, (await ctx.db.get(idGenerare))!)))?.[0].descriere).toBe(original);
   const output = await user.action(api.oferte.actions.genereazaExcelOutput, { idGenerare });
   const buffer = await t.run(async (ctx) => (await ctx.storage.get(output.storageId as Id<"_storage">))!.arrayBuffer());
   expect(XLSX.read(buffer, { type: "array" }).Sheets.Electrice.A2.v).toBe(original);

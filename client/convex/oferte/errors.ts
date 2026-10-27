@@ -16,7 +16,7 @@ const recoveries = {
 } as const;
 
 export type FlowErrorCode = keyof typeof recoveries;
-export type FlowStage = "upload" | "analysis" | "extraction" | "matching" | "validation" | "bulkValidation" | "deletion" | "replacement" | "export" | "load";
+export type FlowStage = "upload" | "analysis" | "extraction" | "matching" | "validation" | "bulkValidation" | "pricing" | "deletion" | "replacement" | "export" | "load";
 export type FlowError = { code: FlowErrorCode; message: string; sheetName?: string; recovery: typeof recoveries[FlowErrorCode] };
 
 export function flowError(code: FlowErrorCode, message: string, sheetName?: string) {
@@ -28,6 +28,7 @@ export function structureError(sheetName?: string) {
 }
 
 const fallbackMessages: Record<FlowStage, string> = {
+  pricing: "Prețurile de vânzare nu au putut fi actualizate. Verifică multiplicatorul și încearcă din nou.",
   upload: "Fișierul nu a putut fi încărcat. Verifică conexiunea și încearcă din nou.",
   analysis: "Analiza automată nu a putut fi finalizată. Încearcă din nou sau selectează manual structura Excelului.",
   extraction: "Materialele nu au putut fi extrase. Încearcă din nou. Dacă problema persistă, verifică manual structura Excelului.",

@@ -78,6 +78,7 @@ export default function ReplaceOfferMaterial({ material, idGenerare, revision, o
     setSaveError("");
     try {
       await replace({ idGenerare, expectedRevision: revision, rand: material.rand, sheetName: material.sheetName,
+        catalogMaterialId: selected.id,
         descriere: selected.descriere, pretAchizitie: selected.pretAchizitie, pretVanzare: selected.pretVanzare ?? 0, manopera: selected.manopera });
       toast.success("Materialul asociat a fost schimbat. Verifică prețurile și validează rândul.");
       onClose();

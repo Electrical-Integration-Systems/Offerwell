@@ -4,7 +4,11 @@ import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { NO_MATERIAL_MATCH } from "./oferte/matching";
 
-const client = new TypeSafeClient();
+// Construct on demand so a fresh deployment can start before its AI keys are set.
+const getClient = () => new TypeSafeClient({
+  baseURL: process.env.TYPESAFE_BASE_URL,
+  apiKey: process.env.TYPESAFE_API_KEY,
+});
 
 /**
  * Update an existing material in the 'materiale' collection.
@@ -24,7 +28,7 @@ export const alegePret = async (
   );
   options[NO_MATERIAL_MATCH] = "Niciun material nu se potrivește. Nu există o referință compatibilă în lista de materiale propuse.";
 
-  return await client.systemOne({
+  return await getClient().systemOne({
     state: {
       material,
     },

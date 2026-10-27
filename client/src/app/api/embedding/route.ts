@@ -11,20 +11,22 @@ export async function POST(req: Request) {
             );
         }
 
-        const baseURL = process.env.OPEN_WEBUI_BASE_URL || "";
-
-        console.log(process.env.OPEN_WEBUI_BASE_URL);
+        const ollamaURL = process.env.OLLAMA_BASE_URL?.replace(/\/$/, "");
+        const baseURL = process.env.OPEN_WEBUI_BASE_URL?.replace(/\/$/, "") || "";
+        if (!ollamaURL && !baseURL) {
+            return NextResponse.json({ error: "Serviciul de embedding nu este configurat." }, { status: 503 });
+        }
         const apiKey = process.env.OPEN_WEBUI_API_KEY || "";
-        const endpoint = `${baseURL}/ollama/api/embed`;
+        const endpoint = ollamaURL ? `${ollamaURL}/api/embed` : `${baseURL}/ollama/api/embed`;
 
         const response = await fetch(endpoint, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${apiKey}`,
+                ...(!ollamaURL && apiKey ? { "Authorization": `Bearer ${apiKey}` } : {}),
             },
             body: JSON.stringify({
-                model: "nomic-embed-text:latest",
+                model: process.env.OLLAMA_EMBEDDING_MODEL || (ollamaURL ? "nomic-embed-text:v1.5" : "nomic-embed-text:latest"),
                 input: text,
             }),
         });
